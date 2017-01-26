@@ -1,0 +1,209 @@
+======================================================================
+		      CRC SOFTWARE RELEASE NOTES
+
+      Copyright(c) 2017, Intel Corporation. All rights reserved.
+======================================================================
+
+Note:  Code Names  are only  for use  by Intel  to  identify products,
+platforms,  programs, services,  etc. ("products")  in  development by
+Intel that  have not been  made commercially available to  the public,
+i.e., announced,  launched or  shipped. They are  never to be  used as
+"commercial"  names  for products.  Also,  they  are  not intended  to
+function as trademarks.
+
+README for Intel CRC Benchmark Application
+
+
+1.  Abbreviations
+
+CRC - Cyclic Redundancy Check
+IA - Intel Architecture
+PCLMULQDQ - Carry-Less Multiplication Quad Word (IA CPU instruction)
+PoC - Proof of Concept
+IP - Internet Protocol
+
+2.  Introduction
+
+This is Proof of Concept software intended to showcase the performance
+of efficient CRC implementations on Intel(r) architecture processors.
+
+This program  is used  to benchmark the  performance of  different CRC
+algorithm implementations.  This is done  by measuring the  time taken
+for  multiple executions  of the  same  function. When  the CPU  clock
+frequency is  known, then it is  possible to calculate  the cycles per
+byte  factor.  This  method is  a  more universal  way of  performance
+measurement than  the one using  the RDTSC instruction since  the time
+stamp counter read by the  RDTSC instruction is clocked differently on
+different CPU models.
+
+Current performance  measurement also includes the  burden of function
+calls  and performance measurement  loops. As  the result  it provides
+slightly  more   pessimistic  data  than   the  actual  cost   of  CRC
+computation.
+
+Please  note   that  Intel  SpeedStep(r)  and   Intel(r)  Turbo  Boost
+Technology affect  reliable cycle measurement.  They  should be turned
+off to get actual performance data.
+
+
+2.1 CRC Algorithms Implemented
+
+- Look-Up Table (LUT)
+    - Processes one data byte per iteration
+    - Uses one precomputed 256 element table
+    - The  element size depends  on the CRC  size. For an 8-bit CRC, the
+      total memory occupied by the LUT is:
+          1 x  256 x (8 bits / 8  bits) = 256 bytes
+
+- Slice-by-2 (S2)
+    - Processes two data bytes in one iteration
+    - Uses two precomputed  256 element tables
+    - The element size depends on the CRC size. For a 16-bit CRC, the
+      total memory occupied by the tables is:
+          2 x 256 x (16 bits / 8 bits ) = 2 x 512 = 1024 bytes
+    - Other algorithm versions  processing more  bytes  per iteration
+      (such as, slice-by-4) are possible.
+      However, the space occupied by the look-up tables grows with the
+      number of processed bytes in one iteration.
+
+- Slice-by-4 (S4)
+    - Similar in concept to Slice-by-2
+    - Processes four data bytes in one iteration
+    - Uses four precomputed 256 element tables
+    - The element size depends on the  CRC size. For a 32-bit CRC, the
+      total memory occupied by tables is:
+          4 x 256 x (32 bits / 8 bits ) = 4 x 1024 = 4096 bytes
+
+- Carry-Less Multiplication (CLMUL)
+    - Uses no lookup tables 
+    - Folds a data block into  a  single 16-byte  chunk  with the help of
+      precomputed constants
+    - Processes 16 data bytes in one iteration
+    - Folded 16-byte  is reduced  to 32 bit  value using Barrett reduction.
+    - Uses the Intel PCLMULQDQ  instruction (first available on Westmere) 
+    - PCLMULQDQ with XMM  registers  works   natively  with  32-bit
+      polynomials.
+      A 16-bit polynomial  must be promoted to a  32-bit polynomial to
+      make use of this algorithm.
+      The performance of  the 16-bit and 32-bit CRC using this method
+      is identical.
+    - It is possible to use CLMUL for CRC sizes smaller than 16.
+    - Total memory occupied by constants is:
+          3x16 [bytes] + 1x16 [bytes] = 48 + 16 [bytes] = 64 [bytes]
+      Five pre-computed constanst are saved in form of three XMM 16
+      byte registers. The additional 16 bytes is used to change endianess
+      of 16 byte data blocks.
+
+- Internet Protocol Checksum
+    Although it is not strictly a CRC computation, the IP one's complement
+    checksum implementation has been added to the library.
+
+    There are two checksum type implementations; generic OC16/TCP/IP and
+    UDP/IPv4-specific. Each checksum type has two implementations:
+        - Vanilla C implementation
+        - SSE3-based implementation using Intel intrinsics
+    
+    Note on the vanilla C implementation and compiler options:
+
+      The current version of the "Makefile" uses the -O2 compilation option and
+      effectively prevents compiler vectorization of the code.
+      When the -O3 option is used in combination with -msseXX or -mavxX,
+      the compiler attempts to vectorize the code. The vanilla C
+      implementation qualifies for vectorization and the compiler uses
+      vector instructions at compilation time. If vectorized,
+      performance of the vanilla C implementation gets better and
+      close to the SSE implementation.
+      As measured on an Intel(r) Core(tm) i7-3770 platform,
+      the vectorized vanilla C implementation is about 20% worse than
+      the SSE implementation.
+      However, vanilla C code is more portable and more easily takes
+      advantage of new architectures. For example, when using a
+      4th generation Intel(r) Core(tm) processor, the -msse4.2 option
+      can be replaced with -mavx2 and in conjunction with the -O3 option,
+      the compiler may provide a better checksum implementation than
+      that provided by SSE for this architecture.
+
+3.  Program Compilation
+
+If your package includes the following files:
+    libcrc.a
+    crcext.h
+    main.c
+    Makefile
+    README
+and  some  additional  header  files, you  have  a  binary package. 
+Please refer  to Section 3.2 for build  instructions.
+
+In  all   other  cases,  please   refer  to  Section  3.1   for  build
+instructions.
+
+3.1 Source Package
+
+The program compiles on 64- and 32-bit Linux* as a user space program.
+It has been tested on:
+    - Fedora* 11, 64-bit, 2.6.29 kernel, GCC 4.4.0
+    - Fedora* 14, 32-bit, 2.6.35 kernel, GCC 4.5.1
+    - Fedora* 16, 64-bit, 3.1.0-7 kernel, GCC 4.6.3
+
+To  compile  the program,  please  run  the  "make" command.   If  you
+encounter problems with compilation on a 32-bit machine using ICC, you
+may  need to run  the "make  BUILD32=y" command  which will  force the
+compiler to use SSE4.2 instructions.
+
+For cross  compiling 32-bit  code on a  64-bit system, please  run the
+"make CROSSBUILD32=y" command.
+
+After  successful compilation,  the "crctest"  executable  file should
+appear in the folder.
+
+3.2 Binary Package
+
+The program compiles on 64-bit Linux* as a user space program.
+It has been tested on:
+    - Fedora* 11, 64-bit, 2.6.29 kernel, GCC 4.4.0
+    - Fedora* 14, 32-bit, 2.6.35 kernel, GCC 4.5.1
+
+To  compile  the program,  please  run  the  "make" command.
+
+After  successful compilation,  the "crctest"  executable  file should
+appear in the folder.
+
+4.  Program Execution
+
+The user space  application benchmarks all of the  available CRCs with
+the  corresponding algorithms.  It measures  algorithm  performance in
+total time spent [s] and number of cycles per byte. Other command line
+arguments allow  the selection of  core affinity, vector size  and the
+number of iterations.
+
+Some of available command line options are:
+
+        -h                 :print help
+        -c CPUNUMBER       :set the CPU number that will run the thread
+        -i NUM_ITERATIONS  :set the number of iterations (in 1000 units)
+        -s VECTOR_SIZE     :enter a test vector size
+
+To see all command line argument options please run "./crctest -h".
+
+Example program usage:
+
+./crctest -c 2 -i 1000 -s 1024
+
+This  command pins  the test  thread  to CPU  ID 2,  and runs  1000000
+iterations of each CRC algorithm on a 1024 byte data block size. 
+
+
+5.  References
+
+[1] High Octane CRC Generation with the Intel Slicing-by-8 Algorithm
+ftp://download.intel.com/technology/comms/perfnet/download/slicing-by-8.pdf
+
+[2] Fast CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction
+http://download.intel.com/design/intarch/papers/323102.pdf
+
+[3] A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS
+http://www.ross.net/crc/download/crc_v3.txt
+
+
+* Other names and brands may be claimed as the property of others.
+

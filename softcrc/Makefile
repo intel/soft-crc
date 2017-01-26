@@ -1,0 +1,117 @@
+###############################################################################
+# Makefile script for RNC CRC Test Application
+#
+# @par
+# Copyright (c) 2009-2017, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###############################################################################
+
+APPNAME ?= crctest
+LIBNAME ?= libcrc.a
+DEPFILE ?= depend
+
+CFLAGS = -Wall -Winline
+CFLAGS_GCC = -msse4.2 -mpclmul -falign-loops=32
+CFLAGS_ICC64 = -axSSE4.2 -xHost
+CFLAGS_ICC32 = -axSSE4.2 
+LDFLAGS = -L. -lcrc
+
+ifeq ($(CC),icc)
+#
+# ICC Intel C Compiler
+#
+ifeq ($(BUILD32),y)
+CFLAGS += $(CFLAGS_ICC32)
+else
+CFLAGS += $(CFLAGS_ICC64)
+endif
+else
+#
+# GCC GNU C Compiler
+#
+CFLAGS += $(CFLAGS_GCC)
+endif
+
+ifeq ($(DEBUG),y)
+CFLAGS += -g -O0 -DDEBUG
+else
+# Same as -O3 but no -ftree-vectorize to avoid vectorization of standard checksum code
+# When -O3 was used then standard TCP/IP checksum code got vectorized and
+# it was not fair comparison between standard IA code and SSE enabled one.
+# SSE enabled code was still better than vectorized by compiler. Change to -O3 and check :)
+# It doesnot affect CRC code which doesnot get vectorized anyway.
+CFLAGS += -O2 -finline-functions -funswitch-loops -fpredictive-commoning -fgcse-after-reload -fipa-cp-clone 
+endif
+
+ifeq ($(VERBOSE),y)
+CFLAGS += -ftree-vectorizer-verbose=2
+endif
+
+ifeq ($(CROSSBUILD32),y)
+CFLAGS+=-m32
+endif
+
+#
+# Build rules
+#
+
+
+AFILES = crc.o
+AFILES += crc_rnc.o
+AFILES += crc_wimax.o
+AFILES += crc_sctp.o
+AFILES += crc_tcpip.o
+
+all: $(APPNAME)
+
+$(APPNAME): $(DEPFILE) main.o $(LIBNAME)
+	$(CC) $(CFLAGS) main.o $(LDFLAGS) -o $@
+
+$(DEPFILE): $(subst .o,.c,main.o $(AFILES))
+	$(CC) -MM $(CFLAGS) $^ > $@
+
+$(LIBNAME): $(AFILES)
+	$(AR) crvs $@ $^
+
+
+.PHONY: help
+help:
+	@echo " "
+	@echo "Compilation options:"
+	@echo "    make all    - compile crctest application"
+	@echo "    make clean  - clean folder from compilation object files"
+	@echo " "
+
+# Include dependecies file
+-include $(DEPFILE)
+
+.PHONY: TAGS
+TAGS:
+	etags *.[ch]
+
+.PHONY: clean
+clean:
+	-rm -f $(APPNAME) $(DEPFILE) *.o *.a
+
