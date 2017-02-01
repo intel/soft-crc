@@ -100,8 +100,10 @@ $(LIBNAME): $(AFILES)
 help:
 	@echo " "
 	@echo "Compilation options:"
-	@echo "    make all    - compile crctest application"
-	@echo "    make clean  - clean folder from compilation object files"
+	@echo "    make all      - compile crctest application"
+	@echo "    make clean    - clean folder from compilation object files"
+	@echo "    make style    - run checkpatch.pl on files"
+	@echo "    make cppcheck - run cppcheck on files"
 	@echo " "
 
 # Include dependecies file
@@ -115,3 +117,19 @@ TAGS:
 clean:
 	-rm -f $(APPNAME) $(DEPFILE) *.o *.a
 
+CHECKPATCH?=checkpatch.pl
+.PHONY: style
+style:
+	$(CHECKPATCH) --no-tree --no-signoff --emacs \
+	--ignore CODE_INDENT,INITIALISED_STATIC,LEADING_SPACE,SPLIT_STRING,NEW_TYPEDEFS,\
+	UNSPECIFIED_INT,ARRAY_SIZE,BLOCK_COMMENT_STYLE,CONSTANT_COMPARISON \
+	-f crc.c -f crc_rnc.c -f crc_sctp.c -f crc_tcpip.c -f crc_wimax.c -f main.c \
+	-f crcext.h -f crc.h -f crc_rnc.h -f crc_sctp.h -f crc_tcpip.h -f crc_wimax.h
+
+CPPCHECK?=cppcheck
+.PHONY: cppcheck
+cppcheck:
+	$(CPPCHECK) --enable=warning,portability,performance,unusedFunction,missingInclude \
+	--std=c99 --template=gcc --suppress=uninitvar \
+	crc.c crc_rnc.c crc_sctp.c crc_tcpip.c crc_wimax.c main.c crcext.h crc.h crc_rnc.h \
+	crc_sctp.h crc_tcpip.h crc_wimax.h
