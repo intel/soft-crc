@@ -31,10 +31,12 @@
  */
 
 #include "crc.h"
+#include "crcr.h"
 #include "crc_rnc.h"
 #include "crc_wimax.h"
 #include "crc_sctp.h"
 #include "crc_tcpip.h"
+#include "crc_ether.h"
 
 /**
  * Global data
@@ -461,7 +463,7 @@ void CRCInit( void )
 
         IPChecksumInit();
 
+        EtherCrcInit();
+
         is_initialized = 1;
 }
-
-

@@ -79,10 +79,12 @@ endif
 
 
 AFILES = crc.o
+AFILES += crcr.o
 AFILES += crc_rnc.o
 AFILES += crc_wimax.o
 AFILES += crc_sctp.o
 AFILES += crc_tcpip.o
+AFILES += crc_ether.o
 
 all: $(APPNAME)
 
@@ -123,13 +125,17 @@ style:
 	$(CHECKPATCH) --no-tree --no-signoff --emacs \
 	--ignore CODE_INDENT,INITIALISED_STATIC,LEADING_SPACE,SPLIT_STRING,NEW_TYPEDEFS,\
 	UNSPECIFIED_INT,ARRAY_SIZE,BLOCK_COMMENT_STYLE,CONSTANT_COMPARISON \
-	-f crc.c -f crc_rnc.c -f crc_sctp.c -f crc_tcpip.c -f crc_wimax.c -f main.c \
-	-f crcext.h -f crc.h -f crc_rnc.h -f crc_sctp.h -f crc_tcpip.h -f crc_wimax.h
+	-f crc.c -f crc.h -f crcr.c -f crcr.h -f crc_rnc.c -f crc_rnc.h \
+	-f crc_sctp.c -f crc_sctp.h -f crc_tcpip.c -f crc_tcpip.h \
+	-f crc_wimax.c -f crc_wimax.h -f crc_ether.c -f crc_ether.h \
+	-f main.c -f crcext.h
 
 CPPCHECK?=cppcheck
 .PHONY: cppcheck
 cppcheck:
 	$(CPPCHECK) --enable=warning,portability,performance,unusedFunction,missingInclude \
 	--std=c99 --template=gcc --suppress=uninitvar \
-	crc.c crc_rnc.c crc_sctp.c crc_tcpip.c crc_wimax.c main.c crcext.h crc.h crc_rnc.h \
-	crc_sctp.h crc_tcpip.h crc_wimax.h
+	crc.c crc.h crcr.c crcr.h crc_rnc.c crc_rnc.h crc_sctp.c crc_sctp.h \
+	crc_tcpip.c crc_tcpip.h crc_wimax.c crc_wimax.h crc_ether.c crc_ether.h \
+	main.c crcext.h
+  

@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2009-2017, Intel Corporation
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of Intel Corporation nor the names of its contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,7 +27,7 @@
 
 /**
  * Include files
- * 
+ *
  */
 
 #define _GNU_SOURCE
@@ -53,10 +53,11 @@
 #include "crc_wimax.h"
 #include "crc_sctp.h"
 #include "crc_tcpip.h"
+#include "crc_ether.h"
 
 /**
  * Macros
- * 
+ *
  */
 
 #ifdef DEBUG
@@ -68,12 +69,12 @@
 #define DIM(x) (sizeof(x)/sizeof(x[0]))
 
 #define DEFAULT_ITERATIONS   1000000
-#define NUM_DIFF_VECT_SIZES  1000 
+#define NUM_DIFF_VECT_SIZES  1000
 #define DEFAULT_VECT_SIZE    32
 
 /**
  * Data types
- * 
+ *
  */
 typedef uint32_t (*crc32fn_t)(const uint8_t *,uint32_t);
 typedef uint16_t (*crc16fn_t)(const uint8_t *,uint32_t);
@@ -93,7 +94,7 @@ struct enum_map{
 
 /**
  * TAG bit field definition
- * 
+ *
  */
 
 /**
@@ -105,6 +106,7 @@ struct enum_map{
 #define TAG_APP_SCTP  (1ULL<<3)
 #define TAG_APP_WIMAX (1ULL<<4)
 #define TAG_APP_TCPIP (1ULL<<5)
+#define TAG_APP_ETHER (1ULL<<6)
 
 /**
  * bits 7:9 algorithm type
@@ -124,7 +126,7 @@ struct enum_map{
  */
 #define TAG_ID_START_BIT (12)
 #define TAG_ID_START     (1ULL<<(TAG_ID_START_BIT))
-#define TAG_ID_FPCRC7    (1ULL<<(TAG_ID_START_BIT+0)) 
+#define TAG_ID_FPCRC7    (1ULL<<(TAG_ID_START_BIT+0))
 #define TAG_ID_FPCRC11   (1ULL<<(TAG_ID_START_BIT+1))
 #define TAG_ID_FPCRC16   (1ULL<<(TAG_ID_START_BIT+2))
 #define TAG_ID_IUUPCRC6  (1ULL<<(TAG_ID_START_BIT+3))
@@ -136,11 +138,12 @@ struct enum_map{
 #define TAG_ID_WIMAXHCS   (1ULL<<(TAG_ID_START_BIT+9))
 #define TAG_ID_TCPIPSUM16 (1ULL<<(TAG_ID_START_BIT+10))
 #define TAG_ID_UDPIPV4SUM (1ULL<<(TAG_ID_START_BIT+11))
+#define TAG_ID_ETHERCRC32 (1ULL<<(TAG_ID_START_BIT+12))
 #define TAG_ID_END        (1ULL<<63)
 
 /**
  * Data declaration
- * 
+ *
  */
 static double cpu_clock = 0;
 
@@ -202,7 +205,9 @@ static struct{
         { CRC_FUNC_TYPE_CRC16, IPv4UDPChecksum, "IPv4 UDP Checksum", 0xc27f,
           TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_LUT | TAG_ID_UDPIPV4SUM },
         { CRC_FUNC_TYPE_CRC16, IPv4UDPChecksumSSE, "IPv4 UDP Checksum SSE", 0xc27f,
-          TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL | TAG_ID_UDPIPV4SUM | TAG_REQ_CLMUL }
+          TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL | TAG_ID_UDPIPV4SUM | TAG_REQ_CLMUL },
+        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateLUT, "Ethernet CRC32 LUT", 0xB491AAB4,
+          TAG_EXECUTE | TAG_APP_ETHER | TAG_ALG_LUT | TAG_ID_ETHERCRC32 }
 };
 
 static const struct enum_map enum_func_map[] = {
@@ -217,7 +222,8 @@ static const struct enum_map enum_func_map[] = {
         {TAG_ID_WIMAXCRC32,"WIMAXCRC32"},
         {TAG_ID_WIMAXHCS,  "WIMAXHCS"},
         {TAG_ID_TCPIPSUM16,"TCPIPSUM16"},
-        {TAG_ID_UDPIPV4SUM,"UDPIPV4SUM"}
+        {TAG_ID_UDPIPV4SUM,"UDPIPV4SUM"},
+        {TAG_ID_ETHERCRC32,"ETHERCRC32"}
 };
 
 static const struct enum_map enum_alg_map[] = {
@@ -232,12 +238,13 @@ static const struct enum_map enum_app_map[] = {
         {TAG_APP_LTE,      "LTE"},
         {TAG_APP_SCTP,     "SCTP"},
         {TAG_APP_WIMAX,    "WIMAX"},
-        {TAG_APP_TCPIP,    "TCPIP"}
+        {TAG_APP_TCPIP,    "TCPIP"},
+        {TAG_APP_ETHER,    "Ether"}
 };
 
 /**
  * Functions prototypes
- * 
+ *
  */
 
 static void get_cpu_clock(int cpuid);
@@ -256,7 +263,7 @@ print_perf_results( const double tdiff,
                     const uint32_t vector_num,
                     const uint32_t iterations );
 
-static void 
+static void
 crc_perf_test8( crc8fn_t fn8,
                 uint8_t **vector_data,
                 uint32_t *vector_size,
@@ -264,7 +271,7 @@ crc_perf_test8( crc8fn_t fn8,
                 const uint32_t iterations,
                 const char * context);
 
-static void 
+static void
 crc_perf_test16( crc16fn_t fn16,
                  uint8_t **vector_data,
                  uint32_t *vector_size,
@@ -272,7 +279,7 @@ crc_perf_test16( crc16fn_t fn16,
                  const uint32_t iterations,
                  const char * context);
 
-static void 
+static void
 crc_perf_test32( crc32fn_t fn32,
                  uint8_t **vector_data,
                  uint32_t *vector_size,
@@ -280,7 +287,7 @@ crc_perf_test32( crc32fn_t fn32,
                  const uint32_t iterations,
                  const char * context);
 
-static void 
+static void
 crc_perf_test( const func_type_t fntype,
                void *fn,
                uint8_t **vector_data,
@@ -300,27 +307,27 @@ select_test_groups(const struct enum_map *pmap,
 
 /**
  * Implementation
- * 
+ *
  */
 
 /**
  * @brief Get BOGOMIPS value and divide by 2 to get CPU clock
- * 
+ *
  * Function sets cpu_clock variable.
  *
  * @param cpuid CPU id that we are looking clock speed for
- * 
+ *
  */
 static void get_cpu_clock(int cpuid)
 {
         char cb[256];
         FILE *fp = NULL;
         float bogomips = 0;
-        
+
         snprintf( cb, DIM(cb),
                   "cat /proc/cpuinfo | grep bogo | cut -d : -f 2 | head -n %u | tail -n 1",
                   (cpuid+1) );
-        
+
         fp = popen(cb,"r");
         if(fp!=NULL) {
                 if(fscanf( fp, "%f", &bogomips )>0) {
@@ -336,11 +343,11 @@ static void get_cpu_clock(int cpuid)
 }
 
 
-/** 
+/**
  * @brief Initializes data vector of given size.
- * 
+ *
  * @param size size of the vector in bytes
- * 
+ *
  * @return Pointer to initialized vector or NULL on error
  */
 static uint8_t *
@@ -363,12 +370,12 @@ generate_vector(const unsigned size)
         return data_vector;
 }
 
-/** 
+/**
  * @brief Calculates difference between two time stamps in [ms].
- * 
+ *
  * @param time1 first time stamp
  * @param time2 second time stamp
- * 
+ *
  * @return time2 - time1 [ms]
  */
 static double
@@ -381,9 +388,9 @@ time_diff( struct timeb *t1, struct timeb *t2 )
 }
 
 
-/** 
+/**
  * @brief Calculates test statistics and prints test info onto console.
- * 
+ *
  * @param tdiff time span in milliseconds
  * @param crctype text describing CRC type
  * @param context text describing wider CRC context
@@ -423,9 +430,9 @@ print_perf_results( const double tdiff,
                 cycles_per_byte );
 }
 
-/** 
+/**
  * @brief Exercises CRC8 function against test vectors and measures its performance.
- * 
+ *
  * @param fn8 CRC8 function pointer (mutually exclusive to \a fn16)
  * @param vector_data Array of pointers to vector data to be tested
  * @param vector_size Array of data vector sizes
@@ -433,7 +440,7 @@ print_perf_results( const double tdiff,
  * @param iterations Number of iterations
  * @param context Context string to be promoted together with result
  */
-static void 
+static void
 crc_perf_test8( crc8fn_t fn8,
                 uint8_t **vector_data,
                 uint32_t *vector_size,
@@ -467,9 +474,9 @@ crc_perf_test8( crc8fn_t fn8,
                             iterations );
 }
 
-/** 
+/**
  * @brief Exercises CRC16 function against test vectors and measures its performance.
- * 
+ *
  * @param fn16 CRC16 function pointer
  * @param vector_data Array of pointers to vector data to be tested
  * @param vector_size Array of data vector sizes
@@ -477,7 +484,7 @@ crc_perf_test8( crc8fn_t fn8,
  * @param iterations Number of iterations
  * @param context Context string to be promoted together with result
  */
-static void 
+static void
 crc_perf_test16( crc16fn_t fn16,
                  uint8_t **vector_data,
                  uint32_t *vector_size,
@@ -511,9 +518,9 @@ crc_perf_test16( crc16fn_t fn16,
                             iterations );
 }
 
-/** 
+/**
  * @brief Exercises CRC32 function against test vectors and measures its performance.
- * 
+ *
  * @param fn32 CRC32 function pointer
  * @param vector_data Array of pointers to vector data to be tested
  * @param vector_size Array of data vector sizes
@@ -521,7 +528,7 @@ crc_perf_test16( crc16fn_t fn16,
  * @param iterations Number of iterations
  * @param context Context string to be promoted together with result
  */
-static void 
+static void
 crc_perf_test32( crc32fn_t fn32,
                  uint8_t **vector_data,
                  uint32_t *vector_size,
@@ -555,9 +562,9 @@ crc_perf_test32( crc32fn_t fn32,
                             iterations );
 }
 
-/** 
+/**
  * @brief Exercises CRC function against test vectors and measures its performance.
- * 
+ *
  * @param fntype CRC function type
  * @param fn CRC function pointer
  * @param vector_data Array of pointers to vector data to be tested
@@ -566,7 +573,7 @@ crc_perf_test32( crc32fn_t fn32,
  * @param iterations Number of iterations
  * @param context Context string to be promoted together with result
  */
-static void 
+static void
 crc_perf_test( const func_type_t fntype,
                void *fn,
                uint8_t **vector_data,
@@ -613,15 +620,15 @@ crc_perf_test( const func_type_t fntype,
 /**
  * ===========================
  * UTILS
- * 
+ *
  */
 
-/** 
+/**
  * @brief CRC test procedure
  *
  * - executes tests against reference vectors
  * - executes tests against a range of payloads
- * 
+ *
  * @return Test result code
  * @retval 0 success
  * @retval -1 failure
@@ -780,9 +787,9 @@ conf_test(void)
 }
 
 
-/** 
+/**
  * @brief Prints help page
- * 
+ *
  */
 static void
 print_help(void)
@@ -881,7 +888,7 @@ select_test_groups(const struct enum_map *pmap,
         else
                 printf(" && ");
 
-        
+
         for( i=0, pch = strtok(user_tags_cpy, " ,") ;
              pch != NULL;
              i++, pch = strtok(NULL, " ,") ) {
@@ -936,12 +943,12 @@ select_test_groups(const struct enum_map *pmap,
         restrictive_tags++;
 }
 
-/** 
+/**
  * @brief Main function of CRC test program
- * 
+ *
  * @param argc number of cmd line arguments
  * @param argv array of cmd line arguments
- * 
+ *
  * @return Program status
  */
 int
@@ -960,7 +967,7 @@ main( int argc, char **argv )
 
         /**
          * Parse command line options
-         * 
+         *
          */
         while((command = getopt(argc, argv, "hr:c:s:i:t:a:l:f:")) != -1){
 
@@ -1023,7 +1030,7 @@ main( int argc, char **argv )
 
         /**
          * Print selected options and verify settings
-         * 
+         *
          */
         printf("\nCPU ID is %d\n", cpuid);
 
@@ -1034,7 +1041,7 @@ main( int argc, char **argv )
                                vector_size_end );
                         exit(EXIT_FAILURE);
                 }
- 
+
                 if( vector_size_start == vector_size_end ) {
                         printf("Vector size range start and end are the same %u!\n",
                                vector_size_start );
@@ -1055,13 +1062,13 @@ main( int argc, char **argv )
 
         /**
          * Get CPU clock
-         * 
+         *
          */
         get_cpu_clock(cpuid);
 
         /**
          * Set PID affinity
-         * 
+         *
          */
         CPU_ZERO(&cpuset);
         CPU_SET(cpuid,&cpuset);
