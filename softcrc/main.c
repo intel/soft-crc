@@ -54,6 +54,7 @@
 #include "crc_sctp.h"
 #include "crc_tcpip.h"
 #include "crc_ether.h"
+#include "crc_cable.h"
 
 /**
  * Macros
@@ -106,7 +107,7 @@ struct enum_map{
 #define TAG_APP_SCTP  (1ULL<<3)
 #define TAG_APP_WIMAX (1ULL<<4)
 #define TAG_APP_TCPIP (1ULL<<5)
-#define TAG_APP_ETHER (1ULL<<6)
+#define TAG_APP_CABLE (1ULL<<6)
 
 /**
  * bits 7:9 algorithm type
@@ -139,6 +140,7 @@ struct enum_map{
 #define TAG_ID_TCPIPSUM16 (1ULL<<(TAG_ID_START_BIT+10))
 #define TAG_ID_UDPIPV4SUM (1ULL<<(TAG_ID_START_BIT+11))
 #define TAG_ID_ETHERCRC32 (1ULL<<(TAG_ID_START_BIT+12))
+#define TAG_ID_CABLECRC16 (1ULL<<(TAG_ID_START_BIT+13))
 #define TAG_ID_END        (1ULL<<63)
 
 /**
@@ -207,7 +209,10 @@ static struct{
         { CRC_FUNC_TYPE_CRC16, IPv4UDPChecksumSSE, "IPv4 UDP Checksum SSE", 0xc27f,
           TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL | TAG_ID_UDPIPV4SUM | TAG_REQ_CLMUL },
         { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateLUT, "Ethernet CRC32 LUT", 0xB491AAB4,
-          TAG_EXECUTE | TAG_APP_ETHER | TAG_ALG_LUT | TAG_ID_ETHERCRC32 }
+          TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT | TAG_ID_ETHERCRC32 },
+        { CRC_FUNC_TYPE_CRC16, CableCrc16CalculateLUT, "Cable CRC16 X.25 LUT", 0x6BEC,
+          TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT | TAG_ID_CABLECRC16}
+
 };
 
 static const struct enum_map enum_func_map[] = {
@@ -223,7 +228,8 @@ static const struct enum_map enum_func_map[] = {
         {TAG_ID_WIMAXHCS,  "WIMAXHCS"},
         {TAG_ID_TCPIPSUM16,"TCPIPSUM16"},
         {TAG_ID_UDPIPV4SUM,"UDPIPV4SUM"},
-        {TAG_ID_ETHERCRC32,"ETHERCRC32"}
+        {TAG_ID_ETHERCRC32,"ETHERCRC32"},
+        {TAG_ID_CABLECRC16,"CABLECRC16"}
 };
 
 static const struct enum_map enum_alg_map[] = {
@@ -239,7 +245,7 @@ static const struct enum_map enum_app_map[] = {
         {TAG_APP_SCTP,     "SCTP"},
         {TAG_APP_WIMAX,    "WIMAX"},
         {TAG_APP_TCPIP,    "TCPIP"},
-        {TAG_APP_ETHER,    "Ether"}
+        {TAG_APP_CABLE,    "Cable"}
 };
 
 /**

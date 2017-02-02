@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2009-2017, Intel Corporation
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of Intel Corporation nor the names of its contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,7 +27,7 @@
 
 /**
  * Implementation of IuUP and FP CRCs
- * 
+ *
  */
 
 #include "crc.h"
@@ -37,10 +37,11 @@
 #include "crc_sctp.h"
 #include "crc_tcpip.h"
 #include "crc_ether.h"
+#include "crc_cable.h"
 
 /**
  * Global data
- * 
+ *
  */
 
 /**
@@ -59,19 +60,19 @@ const uint8_t crc_xmm_shift_tab[48] = {
 
 /**
  * Common macros
- * 
+ *
  */
 
 
 
 /**
  * Common use local data
- * 
+ *
  */
 
 /**
  * Common use function prototypes
- * 
+ *
  */
 static uint32_t
 get_poly_constant( const uint32_t poly, const uint32_t exp );
@@ -80,13 +81,13 @@ get_poly_constant( const uint32_t poly, const uint32_t exp );
  * ========================
  *
  * 8-bit LUT METHOD
- * 
+ *
  * ========================
  */
 
-/** 
+/**
  * @brief Initializes look-up-table (LUT) for given 8 bit polynomial
- * 
+ *
  * @param poly CRC polynomial
  * @param lut pointer to 256 x 8bits look-up-table to be initialized
  */
@@ -118,13 +119,13 @@ crc8_init_lut( const uint8_t poly,
  * ========================
  *
  * 16-bit LUT METHOD
- * 
+ *
  * ========================
  */
 
-/** 
+/**
  * @brief Initializes look-up-table (LUT) for given 16 bit polynomial
- * 
+ *
  * @param poly CRC polynomial
  * @param lut pointer to 256 x 16bits look-up-table to be initialized
  *
@@ -141,7 +142,7 @@ crc16_init_lut( const uint16_t poly,
         for (i = 0; i<256 ; i++) {
                 uint16_t crc = 0;
                 uint_fast32_t j;
-  
+
                 crc = (uint16_t)(i << 8);
 
                 for (j = 0; j < 8; j++) {
@@ -159,13 +160,13 @@ crc16_init_lut( const uint16_t poly,
  * ========================
  *
  * 32-bit LUT METHOD
- * 
+ *
  * ========================
  */
 
-/** 
+/**
  * @brief Initializes look-up-table (LUT) for given 32 bit polynomial
- * 
+ *
  * @param poly CRC polynomial
  * @param lut pointer to 256 x 32bits look-up-table to be initialized
  */
@@ -198,17 +199,17 @@ crc32_init_lut( const uint32_t poly,
  * =================================
  *
  * SLICE-BY-2 METHOD (16 bit CRC)
- * 
+ *
  * =================================
  */
 
-/** 
+/**
  * @brief Initializes look up tables for slice-By-2 method.
- * 
+ *
  * @param poly CRC polynomial
  * @param slice1 pointer to 256 x 16bits slice look-up-table 1 to be initialized
  * @param slice2 pointer to 256 x 16bits slice look-up-table 2 to be initialized
- * 
+ *
  * @return New CRC value
  */
 void
@@ -224,7 +225,7 @@ crc16_init_slice2( const uint16_t poly,
         for (i = 0; i<256 ; i++) {
                 uint16_t crc = 0;
                 uint_fast32_t j;
-  
+
                 crc = (uint16_t)(i << 8);
 
                 for (j = 0; j < 8; j++) {
@@ -252,19 +253,19 @@ crc16_init_slice2( const uint16_t poly,
  * =================================
  *
  * SLICE-BY-4 METHOD (32 bit CRC)
- * 
+ *
  * =================================
  */
 
-/** 
+/**
  * @brief Initializes look up tables for slice-By-4 method.
- * 
+ *
  * @param poly CRC polynomial
  * @param slice1 pointer to 256 x 32bits slice look-up-table 1 to be initialized
  * @param slice2 pointer to 256 x 32bits slice look-up-table 2 to be initialized
  * @param slice3 pointer to 256 x 32bits slice look-up-table 3 to be initialized
  * @param slice4 pointer to 256 x 32bits slice look-up-table 4 to be initialized
- * 
+ *
  * @return New CRC value
  */
 void
@@ -327,7 +328,7 @@ crc32_init_slice4( const uint32_t poly,
  * ===============================
  *
  * PCLMULQDQ METHOD (32 bit CRC)
- * 
+ *
  * ===============================
  */
 
@@ -335,10 +336,10 @@ crc32_init_slice4( const uint32_t poly,
  * @brief Computes constant for CLMUL algorithm
  *
  * Result is: X^exp mod poly
- * 
+ *
  * @param poly polynomial
  * @param exp exponent
- * 
+ *
  * @return constant value
  */
 static uint32_t
@@ -359,9 +360,9 @@ get_poly_constant( const uint32_t poly, const uint32_t exp )
         return res;
 }
 
-/** 
+/**
  * @brief Initializes CRC computation context structure for given polynomial
- * 
+ *
  * @param pctx plcmulqdq CRC computation context structure to be initialized
  * @param poly CRC polynomial
  */
@@ -418,7 +419,7 @@ crc32_init_pclmulqdq( struct crc_pclmulqdq_ctx *pctx,
  * ===================================================================
  */
 
-/** 
+/**
  * @brief Initializes CRC module.
  * @note It is mandatory to run it before using any of CRC API's.
  */
@@ -431,7 +432,7 @@ void CRCInit( void )
         if(is_initialized) {
                 return;
         }
-        
+
         /**
          * Check support for SSE4.2 & PCLMULQDQ
          */
@@ -464,6 +465,7 @@ void CRCInit( void )
         IPChecksumInit();
 
         EtherCrcInit();
+	CableCrcInit();
 
         is_initialized = 1;
 }
