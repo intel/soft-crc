@@ -26,42 +26,13 @@
  */
 
 /**
- * Header file for module with implementation of Ethernet CRCs
+ * Header file for assembly module with implementation of Ethernet CRCs
+ * using PCLMULQDQ method
  *
  */
 
-#ifndef __CRC_ETHER_H__
-#define __CRC_ETHER_H__
-
-/**
- * CRC polynomials
- */
-#define ETHERNET_CRC32_POLYNOMIAL 0x04c11db7UL
-
-/**
- * @brief Initializes data structures for Ethernet crc32 calculations.
- *
- */
-extern void EtherCrcInit(void);
-
-/**
- * @brief Calculates Ethernet CRC32 using LUT method.
- *
- * @param data pointer to data block to calculate CRC for
- * @param data_len size of data block
- *
- * @return New CRC value
- */
-extern uint32_t EtherCrc32CalculateLUT( const uint8_t *data, uint32_t data_len );
-
-/**
- * @brief Calculates Ethernet CRC32 using PCLMULQDQ method.
- *
- * @param data pointer to data block to calculate CRC for
- * @param data_len size of data block
- *
- * @return New CRC value
- */
-extern uint32_t EtherCrc32CalculateCLMUL( const uint8_t *data, uint32_t data_len );
-
-#endif /* __CRCR_ETHER_H__ */
+uint32_t crc32_refl_by8(
+        uint32_t init_crc, //initial CRC value, 32 bits
+        const uint8_t *buf, //buffer pointer to calculate CRC on
+        uint64_t len //buffer length in bytes (64-bit data)
+);

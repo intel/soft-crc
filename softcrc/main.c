@@ -208,11 +208,12 @@ static struct{
           TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_LUT | TAG_ID_UDPIPV4SUM },
         { CRC_FUNC_TYPE_CRC16, IPv4UDPChecksumSSE, "IPv4 UDP Checksum SSE", 0xc27f,
           TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL | TAG_ID_UDPIPV4SUM | TAG_REQ_CLMUL },
-        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateLUT, "Ethernet CRC32 LUT", 0xB491AAB4,
+        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateCLMUL, "Ethernet CRC32 PCLMULQDQ", 0xb491aab4,
+          TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_CLMUL | TAG_ID_ETHERCRC32 },
+        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateLUT, "Ethernet CRC32 LUT", 0xb491aab4,
           TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT | TAG_ID_ETHERCRC32 },
-        { CRC_FUNC_TYPE_CRC16, CableCrc16CalculateLUT, "Cable CRC16 X.25 LUT", 0x6BEC,
+        { CRC_FUNC_TYPE_CRC16, CableCrc16CalculateLUT, "Cable CRC16 X.25 LUT", 0x6bec,
           TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT | TAG_ID_CABLECRC16}
-
 };
 
 static const struct enum_map enum_func_map[] = {

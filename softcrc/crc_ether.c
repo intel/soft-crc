@@ -31,6 +31,7 @@
  */
 #include "crcr.h"
 #include "crc_ether.h"
+#include "crc32_refl_by8.h"
 
 /**
  * Local data
@@ -68,4 +69,13 @@ EtherCrc32CalculateLUT( const uint8_t *data,
                                  data_len,
                                  0xffffffff,
                                  ether_crc32_lut );
+}
+
+uint32_t
+EtherCrc32CalculateCLMUL( const uint8_t *data,
+                        uint32_t data_len )
+{
+        return ~crc32_refl_by8( 0xffffffff,
+                                data,
+                                data_len );
 }
