@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2017, Intel Corporation
- *
+ * Copyright (c) 2009-2017, Intel Corporation
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of Intel Corporation nor the names of its contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,53 +25,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * Header file for module with implementation of reflected CRCs
- *
- */
+#ifndef CRC_TYPES_H_
+#define CRC_TYPES_H_
 
-#ifndef __CRCR_H__
-#define __CRCR_H__
+#ifdef __KERNEL__
+#include <asm/i387.h>
+#include <linux/types.h>
+typedef uint32_t uint_fast32_t; 
+typedef uint16_t uint_fast16_t; 
+typedef uint8_t uint_fast8_t; 
+#else
+#include <stdint.h>
+#include <stddef.h>
+#endif
 
-#include "crcext.h"
-#include "types.h"
+/* Declare variable at address aligned to a boundary */
+#define DECLARE_ALIGNED(_declaration, _boundary)         \
+        _declaration __attribute__((aligned(_boundary)))
 
-/**
- * Functions and prototypes
- *
- */
+/* Macro to make function to be always inlined */
+#ifndef DEBUG
+#define __forceinline                                   \
+        static inline __attribute__((always_inline))
+#else
+#define __forceinline                                   \
+        static
+#endif
 
-/**
- * @brief Initializes reflected look-up-table (LUT) for given 32 bit polynomial
- *
- * @param poly CRC polynomial
- * @param rlut pointer to reflected 256x32bits look-up-table to be initialized
- */
-void crcr32_init_lut(const uint32_t poly, uint32_t *rlut);
+/* Likely & unliekly hints for the compiler */
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
 
-/**
- * @brief Calculates 32 bit reflected CRC using LUT method.
- *
- * @param crc CRC initial value
- * @param data pointer to data block to calculate CRC for
- * @param data_len size of data block
- * @param reflected lut 256x32bits look-up-table pointer
- *
- * @return New CRC value
- */
-__forceinline
-uint32_t crcr32_calc_lut(const uint8_t *data,
-                         uint32_t data_len,
-                         uint32_t crc,
-                         const uint32_t *rlut)
-{
-        if (unlikely(data == NULL || rlut == NULL))
-                return crc;
+/* Macro to get dimension of an array */
+#ifndef DIM
+#define DIM(x) (sizeof(x)/sizeof(x[0]))
+#endif
 
-        while (data_len--)
-                crc = rlut[(crc ^ *data++) & 0xffL] ^ (crc >> 8);
-
-        return crc;
-}
-
-#endif /* __CRCR_H__ */
+#endif /* CRC_TYPES_H_ */

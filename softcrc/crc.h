@@ -33,45 +33,10 @@
 #ifndef __CRC_H__
 #define __CRC_H__
 
-#ifdef __KERNEL__
-#include <asm/i387.h>
-#include <linux/types.h>
-typedef uint32_t uint_fast32_t; 
-typedef uint16_t uint_fast16_t; 
-typedef uint8_t uint_fast8_t; 
-#else
-#include <stdint.h>
-#include <stddef.h>
-#endif
-
-#include <emmintrin.h>
-#include <tmmintrin.h>
-#include <wmmintrin.h>
-#include <smmintrin.h>
-
-#include <cpuid.h>
+#include <x86intrin.h>
 
 #include "crcext.h"
-
-#ifdef DEBUG
-#define INLINE
-#define INLINE_ATTR
-#else
-#define INLINE inline
-#define INLINE_ATTR __attribute__((always_inline))
-#endif
-
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-
-/**
- * Common macros
- * 
- */
-
-#ifndef DIM
-#define DIM(x) (sizeof(x)/sizeof(x[0]))
-#endif
+#include "types.h"
 
 /**
  * Flag indicating availability of PCLMULQDQ instruction
@@ -117,11 +82,9 @@ struct crc_pclmulqdq_ctx {
  * 
  * @return byte swapped value
  */
-static INLINE uint16_t bswap2(uint16_t val) INLINE_ATTR;
-
-static INLINE uint16_t bswap2(uint16_t val)
+__forceinline uint16_t bswap2(const uint16_t val)
 {
-        return (uint16_t) ( (val >> 8) | (val << 8) );
+        return (uint16_t) ((val >> 8) | (val << 8));
 }
 
 /** 
@@ -132,9 +95,7 @@ static INLINE uint16_t bswap2(uint16_t val)
  *
  * @return byte swapped value
  */
-static INLINE uint32_t bswap4(uint32_t val) INLINE_ATTR;
-
-static INLINE uint32_t bswap4(uint32_t val)
+__forceinline uint32_t bswap4(const uint32_t val)
 {
         return ( (val >> 24) |                      /**< A*/
                  ( (val & 0xff0000) >> 8 ) |        /**< B*/
@@ -149,10 +110,7 @@ static INLINE uint32_t bswap4(uint32_t val)
  * @param poly CRC polynomial
  * @param lut pointer to look-up-table to be initialized
  */
-void
-crc8_init_lut( const uint8_t poly,
-               uint8_t *lut );
-
+void crc8_init_lut(const uint8_t poly, uint8_t *lut);
 
 /** 
  * @brief Calculates 8 bit CRC using LUT method.
@@ -164,23 +122,17 @@ crc8_init_lut( const uint8_t poly,
  * 
  * @return New CRC value
  */
-static INLINE uint8_t
-crc8_calc_lut( const uint8_t *data,
-               uint32_t data_len,
-               uint8_t crc,
-               const uint8_t *lut ) INLINE_ATTR;
-
-static INLINE uint8_t
-crc8_calc_lut( const uint8_t *data,
-               uint32_t data_len,
-               uint8_t crc,
-               const uint8_t *lut )
+__forceinline
+uint8_t crc8_calc_lut(const uint8_t *data,
+                       uint32_t data_len,
+                      uint8_t crc,
+                      const uint8_t *lut)
 {
-        if(unlikely(data==NULL||lut==NULL))
+        if (unlikely(data == NULL || lut == NULL))
                 return crc;
 
-        while(data_len--)
-                crc = lut[ *data++ ^ crc];
+        while (data_len--)
+                crc = lut[*data++ ^ crc];
 
         return crc;
 }
@@ -191,9 +143,7 @@ crc8_calc_lut( const uint8_t *data,
  * @param poly CRC polynomial
  * @param lut pointer to 256x16bits look-up-table to be initialized
  */
-void
-crc16_init_lut( const uint16_t poly,
-                uint16_t *lut );
+void crc16_init_lut(const uint16_t poly, uint16_t *lut);
 
 /** 
  * @brief Calculates 16 bit CRC using LUT method.
@@ -205,23 +155,17 @@ crc16_init_lut( const uint16_t poly,
  * 
  * @return New CRC value
  */
-static INLINE uint16_t
-crc16_calc_lut( const uint8_t *data,
-                uint32_t data_len,
-                uint16_t crc,
-                const uint16_t *lut ) INLINE_ATTR;
-
-static INLINE uint16_t
-crc16_calc_lut( const uint8_t *data,
-                uint32_t data_len,
-                uint16_t crc,
-                const uint16_t *lut )
+__forceinline
+uint16_t crc16_calc_lut(const uint8_t *data,
+                        uint32_t data_len,
+                        uint16_t crc,
+                        const uint16_t *lut)
 {
-        if(unlikely(data==NULL||lut==NULL))
+        if (unlikely(data == NULL || lut == NULL))
                 return crc;
 
-        while(data_len--)
-                crc = lut[ (crc >> 8) ^ *data++ ] ^ (crc << 8);
+        while (data_len--)
+                crc = lut[(crc >> 8) ^ *data++] ^ (crc << 8);
 
         return crc;
 }
@@ -232,9 +176,7 @@ crc16_calc_lut( const uint8_t *data,
  * @param poly CRC polynomial
  * @param lut pointer to 256x32bits look-up-table to be initialized
  */
-void
-crc32_init_lut( const uint32_t poly,
-                uint32_t *lut );
+void crc32_init_lut(const uint32_t poly, uint32_t *lut);
 
 /** 
  * @brief Calculates 32 bit CRC using LUT method.
@@ -246,23 +188,17 @@ crc32_init_lut( const uint32_t poly,
  * 
  * @return New CRC value
  */
-static INLINE uint32_t
-crc32_calc_lut( const uint8_t *data,
-                uint32_t data_len,
-                uint32_t crc,
-                const uint32_t *lut ) INLINE_ATTR;
-
-static INLINE uint32_t
-crc32_calc_lut( const uint8_t *data,
-                uint32_t data_len,
-                uint32_t crc,
-                const uint32_t *lut )
+__forceinline
+uint32_t crc32_calc_lut(const uint8_t *data,
+                        uint32_t data_len,
+                        uint32_t crc,
+                        const uint32_t *lut)
 {
-        if(unlikely(data==NULL||lut==NULL))
+        if (unlikely(data == NULL || lut == NULL))
                 return crc;
 
-        while(data_len--)
-                crc = lut[ (crc >> 24) ^ *data++ ] ^ (crc << 8);
+        while (data_len--)
+                crc = lut[(crc >> 24) ^ *data++] ^ (crc << 8);
 
         return crc;
 }
@@ -276,10 +212,9 @@ crc32_calc_lut( const uint8_t *data,
  * 
  * @return New CRC value
  */
-void
-crc16_init_slice2( const uint16_t poly,
-                   uint16_t *slice1,
-                   uint16_t *slice2 );
+void crc16_init_slice2(const uint16_t poly,
+                       uint16_t *slice1,
+                       uint16_t *slice2);
 
 /** 
  * @brief Calculates 16 bit CRC using Slice-By-2 method.
@@ -292,44 +227,30 @@ crc16_init_slice2( const uint16_t poly,
  * 
  * @return New CRC value
  */
-static INLINE uint16_t
-crc16_calc_slice2( const uint8_t *data,
-                   uint32_t data_len,
-                   uint16_t crc,
-                   const uint16_t *slice1,
-                   const uint16_t *slice2 ) INLINE_ATTR;
-
-static INLINE uint16_t
-crc16_calc_slice2( const uint8_t *data,
-                   uint32_t data_len,
-                   uint16_t crc,
-                   const uint16_t *slice1,
-                   const uint16_t *slice2 )
+__forceinline
+uint16_t crc16_calc_slice2(const uint8_t *data,
+                           uint32_t data_len,
+                           uint16_t crc,
+                           const uint16_t *slice1,
+                           const uint16_t *slice2)
 {
         uint_fast32_t i;
 
-        if(unlikely(data==NULL))
+        if (unlikely(data == NULL))
                 return crc;
 
-        if(unlikely(slice1==NULL || slice2==NULL))
+        if (unlikely(slice1 == NULL || slice2 == NULL))
                 return crc;
 
         crc = bswap2(crc);
-
-        for( i = (data_len&(~1)), data += (data_len&(~1)) ; i!=0 ; i -= sizeof(uint16_t) ) {
-                
-                crc ^= (*((const uint16_t*)(data-i)));
-                
-                crc = slice2[ (uint8_t) (crc) ] ^
-                        slice1[ (uint8_t) (crc >> 8) ];
+        for (i = (data_len & (~1)), data += (data_len & (~1)); i != 0;
+             i -= sizeof(uint16_t)) {
+                crc ^= (*((const uint16_t *)(data - i)));
+                crc = slice2[(uint8_t)crc] ^ slice1[(uint8_t)(crc >> 8)];
         }
-
         crc = bswap2(crc);
-
-        if( data_len & 1 ) {
-                crc = (crc << 8) ^
-                        bswap2( slice1[ (crc >> 8) ^ *data ] );
-        }
+        if (data_len & 1)
+                crc = (crc << 8) ^ bswap2(slice1[(crc >> 8) ^ *data]);
 
         return crc;
 }
@@ -345,12 +266,9 @@ crc16_calc_slice2( const uint8_t *data,
  * 
  * @return New CRC value
  */
-void
-crc32_init_slice4( const uint32_t poly,
-                   uint32_t *slice1,
-                   uint32_t *slice2,
-                   uint32_t *slice3,
-                   uint32_t *slice4 );
+void crc32_init_slice4(const uint32_t poly,
+                       uint32_t *slice1, uint32_t *slice2,
+                       uint32_t *slice3, uint32_t *slice4);
 
 /** 
  * @brief Calculates 32 bit CRC using Slice-By-4 method.
@@ -365,51 +283,35 @@ crc32_init_slice4( const uint32_t poly,
  * 
  * @return New CRC value
  */
-static INLINE uint32_t
-crc32_calc_slice4( const uint8_t *data,
-                   uint32_t data_len,
-                   uint32_t crc,
-                   const uint32_t *slice1,
-                   const uint32_t *slice2,
-                   const uint32_t *slice3,
-                   const uint32_t *slice4 ) INLINE_ATTR;
-
-static INLINE uint32_t
-crc32_calc_slice4( const uint8_t *data,
-                   uint32_t data_len,
-                   uint32_t crc,
-                   const uint32_t *slice1,
-                   const uint32_t *slice2,
-                   const uint32_t *slice3,
-                   const uint32_t *slice4 )
+__forceinline
+uint32_t crc32_calc_slice4(const uint8_t *data,
+                           uint32_t data_len, uint32_t crc,
+                           const uint32_t *slice1, const uint32_t *slice2,
+                           const uint32_t *slice3, const uint32_t *slice4)
 {
         uint_fast32_t i;
 
-        if(unlikely(data==NULL))
+        if (unlikely(data == NULL))
                 return crc;
 
-        if(unlikely(slice1==NULL || slice2==NULL ||
-                    slice3==NULL || slice4==NULL) )
+        if (unlikely(slice1 == NULL || slice2 == NULL ||
+                    slice3 == NULL || slice4 == NULL) )
                 return crc;
 
         crc = bswap4(crc);
-
-        for( i=data_len&(~3), data+=(data_len&(~3)) ; i!=0 ; i-=sizeof(uint32_t) ) {
-                
-                crc ^= (*((const uint32_t*)(data-i)));
-                
-                crc = slice4[ (uint8_t) (crc )      ] ^
-                        slice3[ (uint8_t) (crc >> 8)  ] ^
-                        slice2[ (uint8_t) (crc >> 16) ] ^
-                        slice1[ (uint8_t) (crc >> 24) ];
+        for (i = data_len & (~3), data += (data_len & (~3)); i != 0;
+             i -= sizeof(uint32_t)) {
+                crc ^= (*((const uint32_t *)(data - i)));
+                crc =
+                        slice4[(uint8_t) (crc )     ] ^
+                        slice3[(uint8_t) (crc >> 8) ] ^
+                        slice2[(uint8_t) (crc >> 16)] ^
+                        slice1[(uint8_t) (crc >> 24)];
         }
-        
         crc = bswap4(crc);
-
-        for( i=data_len&3, data+=(data_len&3) ; i!=0 ; i-- ) {
+        for (i = data_len & 3, data += (data_len & 3); i != 0; i--)
                 crc = (crc << 8) ^
-                        bswap4( slice1[ (crc >> 24) ^ *(data-i) ] );
-        }
+                        bswap4(slice1[(crc >> 24) ^ *(data - i)]);
 
         return crc;
 }
@@ -421,9 +323,8 @@ crc32_calc_slice4( const uint8_t *data,
  * @param pctx plcmulqdq CRC computation context structure to be initialized
  * @param poly CRC polynomial
  */
-void
-crc32_init_pclmulqdq( struct crc_pclmulqdq_ctx *pctx,
-                      const uint64_t poly );
+void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
+                          const uint64_t poly);
 
 /** 
  * @brief Shifts right 128 bit register by specified number of bytes
@@ -433,14 +334,12 @@ crc32_init_pclmulqdq( struct crc_pclmulqdq_ctx *pctx,
  * 
  * @return \a reg >> (\a num * 8)
  */
-static INLINE __m128i
-xmm_shift_right( __m128i reg, const unsigned num) INLINE_ATTR;
-
-static INLINE __m128i
-xmm_shift_right( __m128i reg, const unsigned int num)
+__forceinline
+__m128i xmm_shift_right(__m128i reg, const unsigned int num)
 {
-        return _mm_shuffle_epi8( reg,
-                                 _mm_loadu_si128( (const __m128i*) (crc_xmm_shift_tab + 16 + num)) );
+        const __m128i *p = (const __m128i *)(crc_xmm_shift_tab + 16 + num);
+
+        return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
 }
 
 /** 
@@ -451,14 +350,12 @@ xmm_shift_right( __m128i reg, const unsigned int num)
  * 
  * @return \a reg << (\a num * 8)
  */
-static INLINE __m128i
-xmm_shift_left( __m128i reg, unsigned int num) INLINE_ATTR;
-
-static INLINE __m128i
-xmm_shift_left( __m128i reg, unsigned int num)
+__forceinline
+__m128i xmm_shift_left(__m128i reg, unsigned int num)
 {
-        return _mm_shuffle_epi8( reg,
-                                 _mm_loadu_si128((const __m128i*)(crc_xmm_shift_tab + 16 - num)) );
+        const __m128i *p = (const __m128i *)(crc_xmm_shift_tab + 16 - num);
+
+        return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
 }
 
 /** 
@@ -478,19 +375,14 @@ xmm_shift_left( __m128i reg, unsigned int num)
  * 
  * @return New 16 byte folded data
  */
-static INLINE __m128i
-crc32_folding_round( const __m128i data_block,
-                     const __m128i k1_k2,
-                     const __m128i fold ) INLINE_ATTR;
-
-static INLINE __m128i
-crc32_folding_round( const __m128i data_block,
-                     const __m128i k1_k2,
-                     const __m128i fold )
+__forceinline
+__m128i crc32_folding_round(const __m128i data_block,
+                            const __m128i k1_k2,
+                            const __m128i fold)
 {
-        return _mm_xor_si128( _mm_clmulepi64_si128(fold, k1_k2, 0x00),
-                              _mm_xor_si128( data_block,
-                                             _mm_clmulepi64_si128(fold, k1_k2, 0x11) ) );
+        return _mm_xor_si128(_mm_clmulepi64_si128(fold, k1_k2, 0x00),
+                             _mm_xor_si128(data_block,
+                                           _mm_clmulepi64_si128(fold, k1_k2, 0x11)));
 }
 
 /** 
@@ -501,27 +393,18 @@ crc32_folding_round( const __m128i data_block,
  * 
  * @return data reduced to 64 bits
  */
-static INLINE __m128i
-crc32_reduce_128_to_64( __m128i fold,
-                        const __m128i k3_q ) INLINE_ATTR;
-
-static INLINE __m128i
-crc32_reduce_128_to_64( __m128i data128,
-                        const __m128i k3_q )
+__forceinline
+__m128i crc32_reduce_128_to_64(__m128i data128, const __m128i k3_q)
 {
         __m128i tmp;
 
-        tmp = _mm_xor_si128( _mm_clmulepi64_si128( data128,
-                                                   k3_q,
-                                                   0x01 /* k3 */),
-                             data128 );
+        tmp = _mm_xor_si128(_mm_clmulepi64_si128(data128, k3_q, 0x01 /* k3 */),
+                            data128);
 
-        data128 = _mm_xor_si128( _mm_clmulepi64_si128( tmp,
-                                                       k3_q,
-                                                       0x01 /* k3 */ ),
-                                 data128 );
+        data128 = _mm_xor_si128(_mm_clmulepi64_si128(tmp, k3_q, 0x01 /* k3 */),
+                                data128);
 
-        return _mm_srli_si128( _mm_slli_si128(data128,8), 8 );
+        return _mm_srli_si128(_mm_slli_si128(data128,8), 8);
 }
 
 /** 
@@ -533,29 +416,20 @@ crc32_reduce_128_to_64( __m128i data128,
  * 
  * @return data reduced to 32 bits
  */
-static INLINE uint32_t
-crc32_reduce_64_to_32( __m128i fold,
-                       const __m128i k3_q,
-                       const __m128i p_res ) INLINE_ATTR;
-
-static INLINE uint32_t
-crc32_reduce_64_to_32( __m128i fold,
-                       const __m128i k3_q,
-                       const __m128i p_res )
+__forceinline
+uint32_t
+crc32_reduce_64_to_32(__m128i fold, const __m128i k3_q, const __m128i p_res)
 {
         __m128i temp;
 
-        temp = _mm_srli_si128( _mm_xor_si128(  _mm_clmulepi64_si128( _mm_srli_si128(fold, 4),
-                                                                     k3_q,
-                                                                     0x10 /* Q */ ),
-                                               fold ),
-                               4 );
+        temp = _mm_srli_si128(_mm_xor_si128(_mm_clmulepi64_si128(_mm_srli_si128(fold, 4),
+                                                                 k3_q, 0x10 /* Q */),
+                                            fold),
+                              4);
 
-        return _mm_extract_epi32( _mm_xor_si128( _mm_clmulepi64_si128( temp,
-                                                                       p_res,
-                                                                       0 /* P */ ),
-                                                 fold ),
-                                  0 );
+        return _mm_extract_epi32(_mm_xor_si128(_mm_clmulepi64_si128(temp, p_res, 0 /* P */),
+                                               fold),
+                                 0);
 }
 
 /** 
@@ -571,28 +445,22 @@ crc32_reduce_64_to_32( __m128i fold,
  *
  * @return CRC for given \a data block (32 bits wide).
  */
-static INLINE uint32_t
-crc32_calc_pclmulqdq( const uint8_t *data, 
-                      uint32_t data_len, 
-                      uint32_t crc, 
-                      const struct crc_pclmulqdq_ctx *params ) INLINE_ATTR;
-
-static INLINE uint32_t
-crc32_calc_pclmulqdq( const uint8_t *data, 
-                      uint32_t data_len, 
-                      uint32_t crc, 
-                      const struct crc_pclmulqdq_ctx *params )
+__forceinline
+uint32_t
+crc32_calc_pclmulqdq(const uint8_t *data,
+                     uint32_t data_len, uint32_t crc,
+                     const struct crc_pclmulqdq_ctx *params)
 {
         __m128i temp, fold, k, swap;
         uint32_t n;
 
-        if(unlikely(data==NULL))
+        if (unlikely(data == NULL))
                 return crc;
 
-        if(unlikely(data_len==0))
+        if (unlikely(data_len == 0))
                 return crc;
 
-        if(unlikely(params==NULL))
+        if (unlikely(params == NULL))
                 return crc;
 
 #ifdef __KERNEL__
@@ -630,17 +498,15 @@ crc32_calc_pclmulqdq( const uint8_t *data,
                  * - adjust data block
                  * - 4 least significant bytes need to be zero
                  */
-                fold = _mm_shuffle_epi8( fold, swap );
-
-                fold = _mm_slli_si128( xmm_shift_right( fold, 20 - data_len ), 4);
+                fold = _mm_shuffle_epi8(fold, swap);
+                fold = _mm_slli_si128(xmm_shift_right(fold, 20 - data_len), 4);
 
                 /**
                  * Apply CRC init value
                  */
-                temp = xmm_shift_left( _mm_insert_epi32( _mm_setzero_si128(), bswap4(crc), 0 ),
-                                       data_len - 4 );
-                fold = _mm_xor_si128( fold, temp );
-
+                temp = xmm_shift_left(_mm_insert_epi32(_mm_setzero_si128(), bswap4(crc), 0),
+                                      data_len - 4);
+                fold = _mm_xor_si128(fold, temp);
         } else {
                 /**
                  * There are 2x16 data blocks or more
@@ -651,17 +517,15 @@ crc32_calc_pclmulqdq( const uint8_t *data,
                  * n = number of bytes required to align \a data_len
                  *     to multiple of 16
                  */
-
                 n = ((~data_len) + 1) & 15;
 
                 /**
                  * Apply CRC initial value and
                  * get \a fold to BE format
                  */
-                fold = _mm_xor_si128( fold,
-                                      _mm_insert_epi32( _mm_setzero_si128(), crc, 0 ) );
-
-                fold = _mm_shuffle_epi8( fold, swap );
+                fold = _mm_xor_si128(fold,
+                                     _mm_insert_epi32(_mm_setzero_si128(), crc, 0));
+                fold = _mm_shuffle_epi8(fold, swap);
 
                 /**
                  * Load next 16 bytes of data and 
@@ -669,29 +533,26 @@ crc32_calc_pclmulqdq( const uint8_t *data,
                  *
                  * CONCAT(fold,next_data) >> (n*8)
                  */
-                next_data = _mm_shuffle_epi8( _mm_loadu_si128((__m128i*)&data[16]),
-                                              swap );
+                next_data = _mm_shuffle_epi8(_mm_loadu_si128((__m128i*)&data[16]),
+                                             swap);
+                next_data = _mm_or_si128(xmm_shift_right(next_data, n),
+                                         xmm_shift_left(fold, 16 - n));
+                fold = xmm_shift_right(fold, n);
 
-                next_data = _mm_or_si128( xmm_shift_right( next_data, n ),
-                                          xmm_shift_left( fold, 16 - n ) );
-
-                fold = xmm_shift_right( fold, n );
-
-                if(unlikely(data_len<=32)) {
+                if (unlikely(data_len <= 32))
                         /**
                          * In such unlikely case clear 4 least significant bytes
                          */
-                        next_data = _mm_slli_si128( _mm_srli_si128( next_data, 4 ),
-                                                    4 );
-                }
+                        next_data =
+                                _mm_slli_si128(_mm_srli_si128(next_data, 4), 4);
 
                 /**
                  * Do the initial folding round on 2 first 16 byte chunks
                  */
                 k = params->k1_k2;
-                fold = crc32_folding_round( next_data, k, fold );
+                fold = crc32_folding_round(next_data, k, fold);
 
-                if(likely(data_len>32)) {
+                if (likely(data_len > 32)) {
                         /**
                          * \a data_block needs to be at elast 48 bytes big to get here
                          */
@@ -704,25 +565,21 @@ crc32_calc_pclmulqdq( const uint8_t *data,
                          *   in order to align it to 16 bytes
                          * - we do not process last 16 bytes as it is processed separately
                          */
-                        for( n = 16 + 16 - n ; n < (data_len - 16) ; n += 16 ) {
-                                fold = crc32_folding_round( _mm_shuffle_epi8( _mm_loadu_si128((__m128i*)(&data[n])),
-                                                                              swap ),
-                                                            k,
-                                                            fold );
-                        }
+                        for (n = 16 + 16 - n; n < (data_len - 16); n += 16)
+                                fold = crc32_folding_round(_mm_shuffle_epi8(_mm_loadu_si128((__m128i*)(&data[n])),
+                                                                            swap),
+                                                           k, fold);
 
                         /**
                          * The last folding round works always on 12 bytes
                          * (12 bytes of data and 4 zero bytes)
                          * We use read from offset -4 to avoid 1 shift right operation.
                          */
-                        fold = crc32_folding_round( _mm_slli_si128(  _mm_shuffle_epi8( _mm_loadu_si128((__m128i*)&data[n-4]),
-                                                                                       swap ),
-                                                                     4 ),
-                                                    k,
-                                                    fold );
-                }
-
+                        fold = crc32_folding_round(_mm_slli_si128( _mm_shuffle_epi8(_mm_loadu_si128((__m128i*)&data[n-4]),
+                                                                                    swap),
+                                                                   4),
+                                                    k, fold);
+                } /* if (data_len > 32) */
         }
 
         /**
@@ -735,14 +592,12 @@ crc32_calc_pclmulqdq( const uint8_t *data,
          * REDUCTION 128 -> 64
          */
         k = params->k3_q;
-        fold = crc32_reduce_128_to_64( fold, k );
+        fold = crc32_reduce_128_to_64(fold, k);
 
         /**
          * REDUCTION 64 -> 32
          */
-        n = crc32_reduce_64_to_32( fold,
-                                   k,
-                                   params->p_res );
+        n = crc32_reduce_64_to_32(fold, k, params->p_res);
 
 #ifdef __KERNEL__
         /**

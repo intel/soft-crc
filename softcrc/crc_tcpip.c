@@ -112,21 +112,17 @@ static __m128i xmm_udp_mask;
  * 
  * @return Calculated 32-bit checksum value
  */
-static INLINE uint32_t
-csum_oc16( const uint8_t *data, uint32_t nwords ) INLINE_ATTR;
-
-static INLINE uint32_t
-csum_oc16( const uint8_t *data, uint32_t data_len )
+__forceinline
+uint32_t csum_oc16(const uint8_t *data,uint32_t data_len)
 {
         const uint16_t *data16 = (const uint16_t *)data;
         uint32_t n, sum = 0;
 
-        for( n=0; n<(data_len/sizeof(uint16_t)); n++ )
+        for (n = 0; n < (data_len / sizeof(uint16_t)); n++)
                 sum += (uint32_t) data16[n];
 
-        if(data_len&1) {
-                sum += (uint32_t)data[data_len-1];
-        }
+        if (data_len & 1)
+                sum += (uint32_t) data[data_len - 1];
 
         return sum;
 }
@@ -138,18 +134,16 @@ csum_oc16( const uint8_t *data, uint32_t data_len )
  * 
  * @return OC16 checksum as defined by RFC1071,RFC1141,RFC1624 
  */
-static INLINE uint16_t csum_oc16_reduce( uint32_t sum ) INLINE_ATTR;
-
-static INLINE uint16_t
-csum_oc16_reduce( uint32_t sum )
+__forceinline
+uint16_t csum_oc16_reduce(uint32_t sum)
 {
         /**
          * Final part looks the same as in original algorithm
          */
-        while(sum>>16)
+        while (sum >> 16)
                 sum = (sum & 0xFFFF) + (sum >> 16);
         
-        return (uint16_t) (~sum);
+        return (uint16_t)(~sum);
 }
 
 /** 
@@ -169,13 +163,9 @@ csum_oc16_reduce( uint32_t sum )
  * 
  * @return Calculated 32-bit checksum value
  */
-static INLINE uint32_t
-csum_oc16_sse( const uint8_t *data, uint32_t data_len,
-               __m128i sum32a, __m128i sum32b ) INLINE_ATTR;
-
-static INLINE uint32_t
-csum_oc16_sse( const uint8_t *data, uint32_t data_len,
-               __m128i sum32a, __m128i sum32b )
+__forceinline
+uint32_t csum_oc16_sse(const uint8_t *data, uint32_t data_len,
+                       __m128i sum32a, __m128i sum32b)
 {
         uint32_t n = 0;
 
@@ -454,11 +444,11 @@ IPv4UDPChecksumSSE( const uint8_t *data, uint32_t data_len)
         __m128i sum32a, sum32b;
         uint32_t sum;
 
-        if(unlikely(data==NULL))
+        if (unlikely(data == NULL))
                 return 0xffff;
 
-        if(unlikely(data_len<
-                    (sizeof(struct ipv4_header)+sizeof(struct udp_header))))
+        if (unlikely(data_len <
+                     (sizeof(struct ipv4_header) + sizeof(struct udp_header))))
                 return 0xffff;
 
 #ifdef __KERNEL__
@@ -473,9 +463,9 @@ IPv4UDPChecksumSSE( const uint8_t *data, uint32_t data_len)
          * Swap 16-bit words from big endian to little endian
          * Extend 16 bit words to 32 bit words for further with SSE
          */
-        sum32a = _mm_loadu_si128((__m128i*)
-                                 (data+offsetof(struct ipv4_header,src_addr)));
-        sum32a = _mm_shuffle_epi8(sum32a,xmm_be_le_swap16a);
+        sum32a = _mm_loadu_si128((__m128i*)(data +
+                                            offsetof(struct ipv4_header, src_addr)));
+        sum32a = _mm_shuffle_epi8(sum32a, xmm_be_le_swap16a);
 
         /**
          * Read UDP header
@@ -483,15 +473,14 @@ IPv4UDPChecksumSSE( const uint8_t *data, uint32_t data_len)
          * Swap 16-bit words from big endian to little endian
          * Extend 16 bit words to 32 bit words for further with SSE
          */
-        sum32b = _mm_loadu_si128((__m128i*)(data+sizeof(struct ipv4_header)));
-        sum32b = _mm_shuffle_epi8(sum32b,xmm_udp_mask);
+        sum32b = _mm_loadu_si128((__m128i *)(data + sizeof(struct ipv4_header)));
+        sum32b = _mm_shuffle_epi8(sum32b, xmm_udp_mask);
 
-        sum = csum_oc16_sse( data + sizeof(struct ipv4_header) +
-                             sizeof(struct udp_header),
-                             data_len - sizeof(struct ipv4_header) -
-                             sizeof(struct udp_header),
-                             sum32a, sum32b ) +
-                ((uint32_t) iph->protocol);
+        sum = csum_oc16_sse(data + sizeof(struct ipv4_header) +
+                            sizeof(struct udp_header),
+                            data_len - sizeof(struct ipv4_header) -
+                            sizeof(struct udp_header),
+                            sum32a, sum32b) + ((uint32_t) iph->protocol);
 
 #ifdef __KERNEL__
         /**
