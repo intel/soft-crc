@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2009-2017, Intel Corporation
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of Intel Corporation nor the names of its contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,7 +27,7 @@
 
 /**
  * Header file for module with implementation of WiMAX CRCs
- * 
+ *
  */
 
 #ifndef __CRC_WIMAX_H__
@@ -53,7 +53,7 @@ extern void WiMAXCrcInit(void);
  *
  * @return New CRC value
  */
-extern uint32_t WiMAXCrc32CalculateLUT( const uint8_t *data, uint32_t data_len );
+extern uint32_t WiMAXCrc32CalculateLUT(const uint8_t *data, uint32_t data_len);
 
 /**
  * @brief Calculates WiMAX OFDMA CRC32 using PCLMULQDQ method
@@ -63,7 +63,8 @@ extern uint32_t WiMAXCrc32CalculateLUT( const uint8_t *data, uint32_t data_len )
  *
  * @return New CRC value
  */
-extern uint32_t WiMAXCrc32CalculateCLMUL( const uint8_t *data, uint32_t data_len );
+extern uint32_t WiMAXCrc32CalculateCLMUL(const uint8_t *data,
+        uint32_t data_len);
 
 /**
  * @brief Calculates WiMAX MAC HCS (header checksum) using LUT method
@@ -73,7 +74,5 @@ extern uint32_t WiMAXCrc32CalculateCLMUL( const uint8_t *data, uint32_t data_len
  *
  * @return New HCS value
  */
-extern uint8_t WiMAXHCSCalculateLUT( const uint8_t *data, uint32_t data_len );
-
-
+extern uint8_t WiMAXHCSCalculateLUT(const uint8_t *data, uint32_t data_len);
 #endif /* __CRC_WIMAX_H__ */

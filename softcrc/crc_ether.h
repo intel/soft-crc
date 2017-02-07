@@ -52,7 +52,7 @@ extern void EtherCrcInit(void);
  *
  * @return New CRC value
  */
-extern uint32_t EtherCrc32CalculateLUT( const uint8_t *data, uint32_t data_len );
+extern uint32_t EtherCrc32CalculateLUT(const uint8_t *data, uint32_t data_len);
 
 /**
  * @brief Calculates Ethernet CRC32 using PCLMULQDQ method.
@@ -62,6 +62,7 @@ extern uint32_t EtherCrc32CalculateLUT( const uint8_t *data, uint32_t data_len )
  *
  * @return New CRC value
  */
-extern uint32_t EtherCrc32CalculateCLMUL( const uint8_t *data, uint32_t data_len );
+extern uint32_t EtherCrc32CalculateCLMUL(const uint8_t *data,
+        uint32_t data_len);
 
 #endif /* __CRCR_ETHER_H__ */

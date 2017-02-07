@@ -77,9 +77,9 @@
  * Data types
  *
  */
-typedef uint32_t (*crc32fn_t)(const uint8_t *,uint32_t);
-typedef uint16_t (*crc16fn_t)(const uint8_t *,uint32_t);
-typedef uint8_t (*crc8fn_t)(const uint8_t *,uint32_t);
+typedef uint32_t (*crc32fn_t)(const uint8_t *, uint32_t);
+typedef uint16_t (*crc16fn_t)(const uint8_t *, uint32_t);
+typedef uint8_t (*crc8fn_t)(const uint8_t *, uint32_t);
 
 typedef enum {
         CRC_FUNC_TYPE_CRC8,
@@ -88,9 +88,9 @@ typedef enum {
         CRC_FUNC_TYPE_NUM_OF
 } func_type_t;
 
-struct enum_map{
+struct enum_map {
         uint64_t tag;
-        char* string_name;
+        char *string_name;
 };
 
 /**
@@ -119,8 +119,8 @@ struct enum_map{
 /**
  * bits 10:11 special type
  */
-#define TAG_EXECUTE   (1ULL<<10)                           /**< Run test only when set to 1 */
-#define TAG_REQ_CLMUL (1ULL<<11)                           /**< requires PCLMULQDQ? */
+#define TAG_EXECUTE   (1ULL<<10)        /**< Run test only when set to 1 */
+#define TAG_REQ_CLMUL (1ULL<<11)        /**< requires PCLMULQDQ? */
 
 /**
  * bits 12:63 function type
@@ -152,68 +152,91 @@ static double cpu_clock = 0;
 static struct{
         func_type_t fntype;
         void *fn;
-        const char *ctx;                                /**< string describing function */
-        uint32_t ref_vector_crc;                        /**< CRC value for reference vector */
+        const char *ctx;        /**< string describing function */
+        uint32_t ref_vector_crc;/**< CRC value for reference vector */
         uint64_t tag;
-        uint32_t temp_crc;                              /**< Used when validating CRC algorithms */
+        uint32_t temp_crc;      /**< Used when validating CRC algorithms */
 
 } fntable[] = {
         { CRC_FUNC_TYPE_CRC8, FPHdrCrc7Calculate, "FP CRC7 LUT", 0x11,
-          TAG_EXECUTE | TAG_APP_FP | TAG_ALG_LUT | TAG_ID_FPCRC7 },
+                TAG_EXECUTE | TAG_APP_FP | TAG_ALG_LUT | TAG_ID_FPCRC7 },
         { CRC_FUNC_TYPE_CRC16, FPHdrCrc11Calculate, "FP CRC11 LUT", 0x624,
-          TAG_EXECUTE | TAG_APP_FP| TAG_ALG_LUT | TAG_ID_FPCRC11 },
+                TAG_EXECUTE | TAG_APP_FP | TAG_ALG_LUT | TAG_ID_FPCRC11 },
         { CRC_FUNC_TYPE_CRC16, FPDataCrc16CalculateLUT, "FP CRC16 LUT", 0x5309,
-          TAG_EXECUTE | TAG_APP_FP | TAG_ALG_LUT | TAG_ID_FPCRC16 },
-        { CRC_FUNC_TYPE_CRC16, FPDataCrc16CalculateS2, "FP CRC16 Slice By2", 0x5309,
-          TAG_EXECUTE | TAG_APP_FP | TAG_ALG_SLICE | TAG_ID_FPCRC16 },
-        { CRC_FUNC_TYPE_CRC16, FPDataCrc16CalculateCLMUL, "FP CRC16 PCLMULQDQ", 0x5309,
-          TAG_EXECUTE | TAG_APP_FP | TAG_ALG_CLMUL | TAG_ID_FPCRC16 | TAG_REQ_CLMUL },
+                TAG_EXECUTE | TAG_APP_FP | TAG_ALG_LUT | TAG_ID_FPCRC16 },
+        { CRC_FUNC_TYPE_CRC16, FPDataCrc16CalculateS2, "FP CRC16 Slice By2",
+                0x5309, TAG_EXECUTE | TAG_APP_FP | TAG_ALG_SLICE |
+                TAG_ID_FPCRC16 },
+        { CRC_FUNC_TYPE_CRC16, FPDataCrc16CalculateCLMUL, "FP CRC16 PCLMULQDQ",
+                0x5309, TAG_EXECUTE | TAG_APP_FP | TAG_ALG_CLMUL |
+                TAG_ID_FPCRC16 | TAG_REQ_CLMUL },
         { CRC_FUNC_TYPE_CRC16, IUUPHdrCrc6Calculate, "IuUP CRC6 LUT", 0x1e,
-          TAG_EXECUTE | TAG_APP_IUUP | TAG_ALG_LUT | TAG_ID_IUUPCRC6 },
-        { CRC_FUNC_TYPE_CRC16, IUUPDataCrc10CalculateLUT, "IuUP CRC10 LUT", 0x27a,
-          TAG_EXECUTE | TAG_APP_IUUP | TAG_ALG_LUT | TAG_ID_IUUPCRC10 },
-        { CRC_FUNC_TYPE_CRC16, IUUPDataCrc10CalculateS2, "IUUP CRC10 Slice By2", 0x27a,
-          TAG_EXECUTE | TAG_APP_IUUP | TAG_ALG_SLICE | TAG_ID_IUUPCRC10 },
-        { CRC_FUNC_TYPE_CRC16, IUUPDataCrc10CalculateCLMUL, "IUUP CRC10 PCLMULQDQ", 0x27a,
-          TAG_EXECUTE | TAG_APP_IUUP | TAG_ALG_CLMUL | TAG_ID_IUUPCRC10 | TAG_REQ_CLMUL },
-        { CRC_FUNC_TYPE_CRC32, LTECrc24ACalculateLUT, "LTE CRC24A LUT", 0x6a1a5b,
-          TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_LUT | TAG_ID_LTECRC24A },
-        { CRC_FUNC_TYPE_CRC32, LTECrc24ACalculateS4, "LTE CRC24A Slice By4", 0x6a1a5b,
-          TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_SLICE | TAG_ID_LTECRC24A },
-        { CRC_FUNC_TYPE_CRC32, LTECrc24ACalculateCLMUL, "LTE CRC24A PCLMULQDQ", 0x6a1a5b,
-          TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_CLMUL | TAG_ID_LTECRC24A | TAG_REQ_CLMUL },
-        { CRC_FUNC_TYPE_CRC32, LTECrc24BCalculateLUT, "LTE CRC24B LUT", 0xe8c129,
-          TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_LUT | TAG_ID_LTECRC24B },
-        { CRC_FUNC_TYPE_CRC32, LTECrc24BCalculateS4, "LTE CRC24B Slice By4", 0xe8c129,
-          TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_SLICE | TAG_ID_LTECRC24B },
-        { CRC_FUNC_TYPE_CRC32, LTECrc24BCalculateCLMUL, "LTE CRC24B PCLMULQDQ", 0xe8c129,
-          TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_CLMUL | TAG_ID_LTECRC24B | TAG_REQ_CLMUL },
-        { CRC_FUNC_TYPE_CRC32, SCTPCrc32cCalculateLUT, "SCTP CRC32c LUT", 0x9d405ff6,
-          TAG_EXECUTE | TAG_APP_SCTP | TAG_ALG_LUT | TAG_ID_SCTPCRC32C },
-        { CRC_FUNC_TYPE_CRC32, SCTPCrc32cCalculateS4, "SCTP CRC32c SliceBy4", 0x9d405ff6,
-          TAG_EXECUTE | TAG_APP_SCTP | TAG_ALG_SLICE | TAG_ID_SCTPCRC32C },
-        { CRC_FUNC_TYPE_CRC32, SCTPCrc32cCalculateCLMUL, "SCTP CRC32c PCLMULQDQ", 0x9d405ff6,
-          TAG_EXECUTE | TAG_APP_SCTP | TAG_ALG_CLMUL | TAG_ID_SCTPCRC32C | TAG_REQ_CLMUL },
-        { CRC_FUNC_TYPE_CRC32, WiMAXCrc32CalculateLUT, "WiMAX OFDMA CRC32 LUT", 0x5788ff55,
-          TAG_EXECUTE | TAG_APP_WIMAX | TAG_ALG_LUT | TAG_ID_WIMAXCRC32 },
-        { CRC_FUNC_TYPE_CRC32, WiMAXCrc32CalculateCLMUL, "WiMAX OFDMA CRC32 PCLMULQDQ", 0x5788ff55,
-          TAG_EXECUTE | TAG_APP_WIMAX | TAG_ALG_CLMUL | TAG_ID_WIMAXCRC32 | TAG_REQ_CLMUL },
+                TAG_EXECUTE | TAG_APP_IUUP | TAG_ALG_LUT | TAG_ID_IUUPCRC6 },
+        { CRC_FUNC_TYPE_CRC16, IUUPDataCrc10CalculateLUT, "IuUP CRC10 LUT",
+                0x27a, TAG_EXECUTE | TAG_APP_IUUP | TAG_ALG_LUT |
+                TAG_ID_IUUPCRC10 },
+        { CRC_FUNC_TYPE_CRC16, IUUPDataCrc10CalculateS2, "IUUP CRC10 Slice By2",
+                0x27a, TAG_EXECUTE | TAG_APP_IUUP | TAG_ALG_SLICE |
+                TAG_ID_IUUPCRC10 },
+        { CRC_FUNC_TYPE_CRC16, IUUPDataCrc10CalculateCLMUL,
+                "IUUP CRC10 PCLMULQDQ", 0x27a, TAG_EXECUTE | TAG_APP_IUUP |
+                TAG_ALG_CLMUL | TAG_ID_IUUPCRC10 | TAG_REQ_CLMUL },
+        { CRC_FUNC_TYPE_CRC32, LTECrc24ACalculateLUT, "LTE CRC24A LUT",
+                0x6a1a5b, TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_LUT |
+                TAG_ID_LTECRC24A },
+        { CRC_FUNC_TYPE_CRC32, LTECrc24ACalculateS4, "LTE CRC24A Slice By4",
+                0x6a1a5b, TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_SLICE |
+                TAG_ID_LTECRC24A },
+        { CRC_FUNC_TYPE_CRC32, LTECrc24ACalculateCLMUL, "LTE CRC24A PCLMULQDQ",
+                0x6a1a5b, TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_CLMUL |
+                TAG_ID_LTECRC24A | TAG_REQ_CLMUL },
+        { CRC_FUNC_TYPE_CRC32, LTECrc24BCalculateLUT, "LTE CRC24B LUT",
+                0xe8c129, TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_LUT |
+                TAG_ID_LTECRC24B },
+        { CRC_FUNC_TYPE_CRC32, LTECrc24BCalculateS4, "LTE CRC24B Slice By4",
+                0xe8c129, TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_SLICE |
+                TAG_ID_LTECRC24B },
+        { CRC_FUNC_TYPE_CRC32, LTECrc24BCalculateCLMUL, "LTE CRC24B PCLMULQDQ",
+                0xe8c129, TAG_EXECUTE | TAG_APP_LTE | TAG_ALG_CLMUL |
+                TAG_ID_LTECRC24B | TAG_REQ_CLMUL },
+        { CRC_FUNC_TYPE_CRC32, SCTPCrc32cCalculateLUT, "SCTP CRC32c LUT",
+                0x9d405ff6, TAG_EXECUTE | TAG_APP_SCTP | TAG_ALG_LUT |
+                TAG_ID_SCTPCRC32C },
+        { CRC_FUNC_TYPE_CRC32, SCTPCrc32cCalculateS4, "SCTP CRC32c SliceBy4",
+                0x9d405ff6, TAG_EXECUTE | TAG_APP_SCTP | TAG_ALG_SLICE |
+                TAG_ID_SCTPCRC32C },
+        { CRC_FUNC_TYPE_CRC32, SCTPCrc32cCalculateCLMUL,
+                "SCTP CRC32c PCLMULQDQ", 0x9d405ff6, TAG_EXECUTE |
+                TAG_APP_SCTP | TAG_ALG_CLMUL | TAG_ID_SCTPCRC32C |
+                TAG_REQ_CLMUL },
+        { CRC_FUNC_TYPE_CRC32, WiMAXCrc32CalculateLUT, "WiMAX OFDMA CRC32 LUT",
+                0x5788ff55, TAG_EXECUTE | TAG_APP_WIMAX | TAG_ALG_LUT |
+                TAG_ID_WIMAXCRC32 },
+        { CRC_FUNC_TYPE_CRC32, WiMAXCrc32CalculateCLMUL,
+                "WiMAX OFDMA CRC32 PCLMULQDQ", 0x5788ff55, TAG_EXECUTE |
+                TAG_APP_WIMAX | TAG_ALG_CLMUL | TAG_ID_WIMAXCRC32 |
+                TAG_REQ_CLMUL },
         { CRC_FUNC_TYPE_CRC32, WiMAXHCSCalculateLUT, "WiMAX HCS LUT", 0x72,
-          TAG_EXECUTE | TAG_APP_WIMAX | TAG_ALG_LUT | TAG_ID_WIMAXHCS },
+                TAG_EXECUTE | TAG_APP_WIMAX | TAG_ALG_LUT | TAG_ID_WIMAXHCS },
         { CRC_FUNC_TYPE_CRC16, IPChecksum, "TCP/IP Checksum", 0x5a4a,
-          TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_LUT | TAG_ID_TCPIPSUM16 },
+                TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_LUT | TAG_ID_TCPIPSUM16 },
         { CRC_FUNC_TYPE_CRC16, IPChecksumSSE, "TCP/IP Checksum SSE", 0x5a4a,
-          TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL | TAG_ID_TCPIPSUM16 | TAG_REQ_CLMUL },
+                TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL |
+                TAG_ID_TCPIPSUM16 | TAG_REQ_CLMUL },
         { CRC_FUNC_TYPE_CRC16, IPv4UDPChecksum, "IPv4 UDP Checksum", 0xc27f,
-          TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_LUT | TAG_ID_UDPIPV4SUM },
-        { CRC_FUNC_TYPE_CRC16, IPv4UDPChecksumSSE, "IPv4 UDP Checksum SSE", 0xc27f,
-          TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL | TAG_ID_UDPIPV4SUM | TAG_REQ_CLMUL },
-        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateCLMUL, "Ethernet CRC32 PCLMULQDQ", 0xb491aab4,
-          TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_CLMUL | TAG_ID_ETHERCRC32 },
-        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateLUT, "Ethernet CRC32 LUT", 0xb491aab4,
-          TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT | TAG_ID_ETHERCRC32 },
-        { CRC_FUNC_TYPE_CRC16, CableCrc16CalculateLUT, "Cable CRC16 X.25 LUT", 0x6bec,
-          TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT | TAG_ID_CABLECRC16}
+                TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_LUT | TAG_ID_UDPIPV4SUM },
+        { CRC_FUNC_TYPE_CRC16, IPv4UDPChecksumSSE, "IPv4 UDP Checksum SSE",
+                0xc27f, TAG_EXECUTE | TAG_APP_TCPIP | TAG_ALG_CLMUL |
+                TAG_ID_UDPIPV4SUM | TAG_REQ_CLMUL },
+        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateCLMUL,
+                "Ethernet CRC32 PCLMULQDQ", 0xb491aab4, TAG_EXECUTE |
+                TAG_APP_CABLE | TAG_ALG_CLMUL | TAG_ID_ETHERCRC32 },
+        { CRC_FUNC_TYPE_CRC32, EtherCrc32CalculateLUT, "Ethernet CRC32 LUT",
+                0xb491aab4, TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT |
+                TAG_ID_ETHERCRC32 },
+        { CRC_FUNC_TYPE_CRC16, CableCrc16CalculateLUT, "Cable CRC16 X.25 LUT",
+                0x6bec, TAG_EXECUTE | TAG_APP_CABLE | TAG_ALG_LUT |
+                TAG_ID_CABLECRC16}
 };
 
 static const struct enum_map enum_func_map[] = {
@@ -224,13 +247,13 @@ static const struct enum_map enum_func_map[] = {
         {TAG_ID_IUUPCRC10, "IUUPCRC10"},
         {TAG_ID_LTECRC24A, "LTECRC24A"},
         {TAG_ID_LTECRC24B, "LTECRC24B"},
-        {TAG_ID_SCTPCRC32C,"SCTPCRC32C"},
-        {TAG_ID_WIMAXCRC32,"WIMAXCRC32"},
+        {TAG_ID_SCTPCRC32C, "SCTPCRC32C"},
+        {TAG_ID_WIMAXCRC32, "WIMAXCRC32"},
         {TAG_ID_WIMAXHCS,  "WIMAXHCS"},
-        {TAG_ID_TCPIPSUM16,"TCPIPSUM16"},
-        {TAG_ID_UDPIPV4SUM,"UDPIPV4SUM"},
-        {TAG_ID_ETHERCRC32,"ETHERCRC32"},
-        {TAG_ID_CABLECRC16,"CABLECRC16"}
+        {TAG_ID_TCPIPSUM16, "TCPIPSUM16"},
+        {TAG_ID_UDPIPV4SUM, "UDPIPV4SUM"},
+        {TAG_ID_ETHERCRC32, "ETHERCRC32"},
+        {TAG_ID_CABLECRC16, "CABLECRC16"}
 };
 
 static const struct enum_map enum_alg_map[] = {
@@ -246,7 +269,7 @@ static const struct enum_map enum_app_map[] = {
         {TAG_APP_SCTP,     "SCTP"},
         {TAG_APP_WIMAX,    "WIMAX"},
         {TAG_APP_TCPIP,    "TCPIP"},
-        {TAG_APP_CABLE,    "Cable"}
+        {TAG_APP_CABLE,    "CABLE"}
 };
 
 /**
@@ -260,57 +283,39 @@ static uint8_t *
 generate_vector(const unsigned size);
 
 static double
-time_diff( struct timeb *t1, struct timeb *t2 );
+time_diff(struct timeb *t1, struct timeb *t2);
 
 static void
-print_perf_results( const double tdiff,
-                    const char *crctype,
-                    const char *context,
-                    const uint32_t *vector_size,
-                    const uint32_t vector_num,
-                    const uint32_t iterations );
+print_perf_results(const double tdiff, const char *crctype, const char *context,
+        const uint32_t *vector_size, const uint32_t vector_num,
+        const uint32_t iterations);
 
 static void
-crc_perf_test8( crc8fn_t fn8,
-                uint8_t **vector_data,
-                uint32_t *vector_size,
-                uint32_t vector_num,
-                const uint32_t iterations,
-                const char * context);
+crc_perf_test8(crc8fn_t fn8, uint8_t **vector_data, uint32_t *vector_size,
+        uint32_t vector_num, const uint32_t iterations, const char *context);
 
 static void
-crc_perf_test16( crc16fn_t fn16,
-                 uint8_t **vector_data,
-                 uint32_t *vector_size,
-                 uint32_t vector_num,
-                 const uint32_t iterations,
-                 const char * context);
+crc_perf_test16(crc16fn_t fn16, uint8_t **vector_data, uint32_t *vector_size,
+        uint32_t vector_num, const uint32_t iterations, const char *context);
 
 static void
-crc_perf_test32( crc32fn_t fn32,
-                 uint8_t **vector_data,
-                 uint32_t *vector_size,
-                 uint32_t vector_num,
-                 const uint32_t iterations,
-                 const char * context);
+crc_perf_test32(crc32fn_t fn32, uint8_t **vector_data, uint32_t *vector_size,
+        uint32_t vector_num, const uint32_t iterations, const char *context);
 
 static void
-crc_perf_test( const func_type_t fntype,
-               void *fn,
-               uint8_t **vector_data,
-               uint32_t *vector_size,
-               uint32_t vector_num,
-               const uint32_t iterations,
-               const char * context);
-
-static void print_help(void);
-
-static int conf_test(void);
+crc_perf_test(const func_type_t fntype, void *fn, uint8_t **vector_data,
+        uint32_t *vector_size, uint32_t vector_num, const uint32_t iterations,
+        const char *context);
 
 static void
-select_test_groups(const struct enum_map *pmap,
-                   const unsigned int map_len,
-                   const char* user_tags);
+print_help(void);
+
+static int
+conf_test(void);
+
+static void
+select_test_groups(const struct enum_map *pmap, const unsigned int map_len,
+        const char *user_tags);
 
 /**
  * Implementation
@@ -331,22 +336,21 @@ static void get_cpu_clock(int cpuid)
         FILE *fp = NULL;
         float bogomips = 0;
 
-        snprintf( cb, DIM(cb),
-                  "cat /proc/cpuinfo | grep bogo | cut -d : -f 2 | head -n %u | tail -n 1",
-                  (cpuid+1) );
+        snprintf(cb, DIM(cb), "cat /proc/cpuinfo | grep bogo | cut -d : -f 2 |"
+                " head -n %u | tail -n 1", (cpuid + 1));
 
-        fp = popen(cb,"r");
-        if(fp!=NULL) {
-                if(fscanf( fp, "%f", &bogomips )>0) {
-                        printf( "BOGOMIPS %.2f\n", bogomips );
-                } else {
+        fp = popen(cb, "r");
+        if (fp != NULL) {
+                if (fscanf(fp, "%f", &bogomips) > 0)
+                        printf("BOGOMIPS %.2f\n", bogomips);
+                else
                         bogomips = 0;
-                }
+
                 pclose(fp);
         }
 
         cpu_clock = ((double)bogomips) / 2;
-        printf( "CPU clock %.2f [MHz]\n", cpu_clock );
+        printf("CPU clock %.2f [MHz]\n", cpu_clock);
 }
 
 
@@ -365,14 +369,13 @@ generate_vector(const unsigned size)
 
         data_vector = (uint8_t *)malloc(size);
 
-        if(data_vector == NULL) {
+        if (data_vector == NULL) {
                 printf("Error allocating data vector size %u!\n", size);
                 exit(EXIT_FAILURE);
         }
 
-        for(i=0;i<size;i++){
+        for (i = 0; i < size; i++)
                 data_vector[i] = (uint8_t) (i & 255);
-        }
 
         return data_vector;
 }
@@ -386,9 +389,10 @@ generate_vector(const unsigned size)
  * @return time2 - time1 [ms]
  */
 static double
-time_diff( struct timeb *t1, struct timeb *t2 )
+time_diff(struct timeb *t1, struct timeb *t2)
 {
         double r = 0;
+
         r = (double)(t2->time - t1->time) * 1000.0;
         r += (double)t2->millitm - (double)t1->millitm;
         return r;
@@ -406,20 +410,17 @@ time_diff( struct timeb *t1, struct timeb *t2 )
  * @param iterations number of iterations
  */
 static void
-print_perf_results( const double tdiff,
-                    const char *crctype,
-                    const char *context,
-                    const uint32_t *vector_size,
-                    const uint32_t vector_num,
-                    const uint32_t iterations )
+print_perf_results(const double tdiff, const char *crctype, const char *context,
+        const uint32_t *vector_size, const uint32_t vector_num,
+        const uint32_t iterations)
 {
         uint_fast32_t j = 0;
         uint64_t total_data = 0;
         double cycles_per_byte = 0;
 
-        for(total_data = 0, j=0;j<vector_num;j++) {
+        for (total_data = 0, j = 0; j < vector_num; j++)
                 total_data += vector_size[j];
-        }
+
         total_data = (total_data * iterations);
 
         /**
@@ -430,15 +431,13 @@ print_perf_results( const double tdiff,
          */
         cycles_per_byte = (1000.0 * tdiff * cpu_clock) / (double)total_data;
 
-        printf( "%-28s %-4s  %-8.3lf  %-11.2f\n",
-                context,
-                crctype,
-                tdiff / 1000.0,
-                cycles_per_byte );
+        printf("%-28s %-4s  %-8.3lf  %-11.2f\n", context, crctype,
+                tdiff / 1000.0, cycles_per_byte);
 }
 
 /**
- * @brief Exercises CRC8 function against test vectors and measures its performance.
+ * @brief Exercises CRC8 function against test vectors and measures its
+ * performance.
  *
  * @param fn8 CRC8 function pointer (mutually exclusive to \a fn16)
  * @param vector_data Array of pointers to vector data to be tested
@@ -448,41 +447,33 @@ print_perf_results( const double tdiff,
  * @param context Context string to be promoted together with result
  */
 static void
-crc_perf_test8( crc8fn_t fn8,
-                uint8_t **vector_data,
-                uint32_t *vector_size,
-                uint32_t vector_num,
-                const uint32_t iterations,
-                const char * context)
+crc_perf_test8(crc8fn_t fn8, uint8_t **vector_data, uint32_t *vector_size,
+        uint32_t vector_num, const uint32_t iterations, const char *context)
 {
         uint_fast32_t i = 0, j = 0;
         struct timeb tb1, tb2;
         double tdiff = 0;
 
-        ASSERT( fn8!=NULL );
+        ASSERT(fn8 != NULL);
 
         /**
          * Benchmarking CRC8 type of function
          */
         ftime(&tb1);
-        for(j=0;j<vector_num;j++) {
-                for(i=0;i<iterations;i++) {
-                        (void) fn8( vector_data[j], vector_size[j] );
-                }
-        }
-        ftime(&tb2);
-        tdiff = time_diff(&tb1,&tb2);
+        for (j = 0; j < vector_num; j++)
+                for (i = 0; i < iterations; i++)
+                        (void) fn8(vector_data[j], vector_size[j]);
 
-        print_perf_results( tdiff,
-                            "8",
-                            context,
-                            vector_size,
-                            vector_num,
-                            iterations );
+        ftime(&tb2);
+        tdiff = time_diff(&tb1, &tb2);
+
+        print_perf_results(tdiff, "8", context, vector_size, vector_num,
+                iterations);
 }
 
 /**
- * @brief Exercises CRC16 function against test vectors and measures its performance.
+ * @brief Exercises CRC16 function against test vectors and measures its
+ * performance.
  *
  * @param fn16 CRC16 function pointer
  * @param vector_data Array of pointers to vector data to be tested
@@ -492,41 +483,33 @@ crc_perf_test8( crc8fn_t fn8,
  * @param context Context string to be promoted together with result
  */
 static void
-crc_perf_test16( crc16fn_t fn16,
-                 uint8_t **vector_data,
-                 uint32_t *vector_size,
-                 uint32_t vector_num,
-                 const uint32_t iterations,
-                 const char * context)
+crc_perf_test16(crc16fn_t fn16, uint8_t **vector_data, uint32_t *vector_size,
+        uint32_t vector_num, const uint32_t iterations, const char *context)
 {
         uint_fast32_t i = 0, j = 0;
         double tdiff = 0;
         struct timeb tb1, tb2;
 
-        ASSERT( fn16!=NULL );
+        ASSERT(fn16 != NULL);
 
         /**
          * Benchmarking CRC16 type of function
          */
         ftime(&tb1);
-        for(j=0;j<vector_num;j++) {
-                for(i=0;i<iterations;i++) {
-                        (void) fn16( vector_data[j], vector_size[j] );
-                }
-        }
-        ftime(&tb2);
-        tdiff = time_diff(&tb1,&tb2);
+        for (j = 0; j < vector_num; j++)
+                for (i = 0; i < iterations; i++)
+                        (void) fn16(vector_data[j], vector_size[j]);
 
-        print_perf_results( tdiff,
-                            "16",
-                            context,
-                            vector_size,
-                            vector_num,
-                            iterations );
+        ftime(&tb2);
+        tdiff = time_diff(&tb1, &tb2);
+
+        print_perf_results(tdiff, "16", context, vector_size, vector_num,
+                iterations);
 }
 
 /**
- * @brief Exercises CRC32 function against test vectors and measures its performance.
+ * @brief Exercises CRC32 function against test vectors and measures its
+ * performance.
  *
  * @param fn32 CRC32 function pointer
  * @param vector_data Array of pointers to vector data to be tested
@@ -536,41 +519,33 @@ crc_perf_test16( crc16fn_t fn16,
  * @param context Context string to be promoted together with result
  */
 static void
-crc_perf_test32( crc32fn_t fn32,
-                 uint8_t **vector_data,
-                 uint32_t *vector_size,
-                 uint32_t vector_num,
-                 const uint32_t iterations,
-                 const char * context)
+crc_perf_test32(crc32fn_t fn32, uint8_t **vector_data, uint32_t *vector_size,
+        uint32_t vector_num, const uint32_t iterations, const char *context)
 {
         uint_fast32_t i = 0, j = 0;
         struct timeb tb1, tb2;
         double tdiff = 0;
 
-        ASSERT( fn32!=NULL );
+        ASSERT(fn32 != NULL);
 
         /**
          * Benchmarking CRC32 type of function
          */
         ftime(&tb1);
-        for(j=0;j<vector_num;j++) {
-                for(i=0;i<iterations;i++) {
-                        (void) fn32( vector_data[j], vector_size[j] );
-                }
-        }
-        ftime(&tb2);
-        tdiff = time_diff(&tb1,&tb2);
+        for (j = 0; j < vector_num; j++)
+                for (i = 0; i < iterations; i++)
+                        (void) fn32(vector_data[j], vector_size[j]);
 
-        print_perf_results( tdiff,
-                            "32",
-                            context,
-                            vector_size,
-                            vector_num,
-                            iterations );
+        ftime(&tb2);
+        tdiff = time_diff(&tb1, &tb2);
+
+        print_perf_results(tdiff, "32", context, vector_size, vector_num,
+                iterations);
 }
 
 /**
- * @brief Exercises CRC function against test vectors and measures its performance.
+ * @brief Exercises CRC function against test vectors and measures its
+ * performance.
  *
  * @param fntype CRC function type
  * @param fn CRC function pointer
@@ -581,40 +556,24 @@ crc_perf_test32( crc32fn_t fn32,
  * @param context Context string to be promoted together with result
  */
 static void
-crc_perf_test( const func_type_t fntype,
-               void *fn,
-               uint8_t **vector_data,
-               uint32_t *vector_size,
-               uint32_t vector_num,
-               const uint32_t iterations,
-               const char * context)
+crc_perf_test(const func_type_t fntype, void *fn, uint8_t **vector_data,
+        uint32_t *vector_size, uint32_t vector_num, const uint32_t iterations,
+        const char *context)
 {
-        ASSERT( fn!=NULL );
+        ASSERT(fn != NULL);
 
-        switch( fntype ) {
+        switch (fntype) {
         case CRC_FUNC_TYPE_CRC8:
-                crc_perf_test8( (crc8fn_t) fn,
-                                vector_data,
-                                vector_size,
-                                vector_num,
-                                iterations,
-                                context );
+                crc_perf_test8((crc8fn_t) fn, vector_data, vector_size,
+                        vector_num, iterations, context);
                 break;
         case CRC_FUNC_TYPE_CRC16:
-                crc_perf_test16( (crc16fn_t) fn,
-                                 vector_data,
-                                 vector_size,
-                                 vector_num,
-                                 iterations,
-                                 context );
+                crc_perf_test16((crc16fn_t) fn, vector_data, vector_size,
+                        vector_num, iterations, context);
                 break;
         case CRC_FUNC_TYPE_CRC32:
-                crc_perf_test32( (crc32fn_t) fn,
-                                 vector_data,
-                                 vector_size,
-                                 vector_num,
-                                 iterations,
-                                 context );
+                crc_perf_test32((crc32fn_t) fn, vector_data, vector_size,
+                        vector_num, iterations, context);
                 break;
         case CRC_FUNC_TYPE_NUM_OF:
         default:
@@ -643,9 +602,10 @@ crc_perf_test( const func_type_t fntype,
 static int
 conf_test(void)
 {
-        static const uint8_t ref_vector[32+16] = {
-                '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f',
-                'g','h','i','j','A','B','C','D','E','F','G','H','I','J','K','L',
+        static const uint8_t ref_vector[32 + 16] = {
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
                 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
                 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
         };
@@ -660,32 +620,37 @@ conf_test(void)
          * reference value.
          */
 
-        for(i=0;i<DIM(fntable);i++) {
+        for (i = 0; i < DIM(fntable); i++) {
                 uint32_t lcrc = 0;
 
-                if( (fntable[i].tag & TAG_REQ_CLMUL) && (!pclmulqdq_available) ) {
+                if ((fntable[i].tag & TAG_REQ_CLMUL) && (!pclmulqdq_available))
                         continue;
-                }
 
                 ASSERT(fntable[i].fn != NULL);
 
-                switch( fntable[i].fntype ) {
+                switch (fntable[i].fntype) {
                 case CRC_FUNC_TYPE_CRC8:
                         {
                                 crc8fn_t fn = (crc8fn_t)(fntable[i].fn);
-                                lcrc = (uint32_t) fn( ref_vector, ref_vector_size );
+
+                                lcrc = (uint32_t) fn(ref_vector,
+                                        ref_vector_size);
                         }
                         break;
                 case CRC_FUNC_TYPE_CRC16:
                         {
                                 crc16fn_t fn = (crc16fn_t)(fntable[i].fn);
-                                lcrc = (uint32_t) fn( ref_vector, ref_vector_size );
+
+                                lcrc = (uint32_t) fn(ref_vector,
+                                        ref_vector_size);
                         }
                         break;
                 case CRC_FUNC_TYPE_CRC32:
                         {
                                 crc32fn_t fn = (crc32fn_t)(fntable[i].fn);
-                                lcrc = (uint32_t) fn( ref_vector, ref_vector_size );
+
+                                lcrc = (uint32_t) fn(ref_vector,
+                                        ref_vector_size);
                         }
                         break;
                 case CRC_FUNC_TYPE_NUM_OF:
@@ -694,17 +659,18 @@ conf_test(void)
                         break;
                 }
 
-                if( lcrc != fntable[i].ref_vector_crc ) {
-                        printf( "! CRC%s %s for reference vector is 0x%x, expected value 0x%x !\n",
-                                (fntable[i].fntype==CRC_FUNC_TYPE_CRC32) ? "32" : ((fntable[i].fntype==CRC_FUNC_TYPE_CRC16) ? "16" : "8"),
-                                fntable[i].ctx,
-                                lcrc,
-                                fntable[i].ref_vector_crc );
-                        errcnt++;
-                }
+                if (lcrc == fntable[i].ref_vector_crc)
+                        continue;
+
+                printf("! CRC%s %s for reference vector is 0x%x, expected "
+                        "value 0x%x !\n",
+                        (fntable[i].fntype == CRC_FUNC_TYPE_CRC32) ? "32" :
+                        ((fntable[i].fntype == CRC_FUNC_TYPE_CRC16) ? "16":"8"),
+                        fntable[i].ctx, lcrc, fntable[i].ref_vector_crc);
+                errcnt++;
         }
 
-        if(errcnt) {
+        if (errcnt) {
                 printf("!!! REFERENCE VECTOR TEST FAILED !!!\n");
                 return -1;
         } else {
@@ -714,65 +680,69 @@ conf_test(void)
         /**
          * Test varying test vectors
          */
-        vec=generate_vector(NUM_DIFF_VECT_SIZES + 16);
+        vec = generate_vector(NUM_DIFF_VECT_SIZES + 16);
 
-        for (i=0; i<=NUM_DIFF_VECT_SIZES; i++) {
+        for (i = 0; i <= NUM_DIFF_VECT_SIZES; i++) {
                 int j;
                 uint64_t k;
 
-                for(j=0;j<DIM(fntable);j++) {
+                for (j = 0; j < DIM(fntable); j++) {
 
-                        if( (fntable[j].tag & TAG_REQ_CLMUL) && (!pclmulqdq_available) ) {
-                                printf( "%s requires PCLMULQDQ instruction. "
-                                        "This is unsupported on current platform. Skipping ...\n",
-                                        fntable[j].ctx );
+                        if ((fntable[j].tag & TAG_REQ_CLMUL) &&
+                                        (!pclmulqdq_available)) {
+                                printf("%s requires PCLMULQDQ instruction. "
+                                        "This is unsupported on current "
+                                        "platform. Skipping ...\n",
+                                        fntable[j].ctx);
                                 continue;
                         }
 
-                        if( fntable[j].fntype == CRC_FUNC_TYPE_CRC8 ) {
+                        if (fntable[j].fntype == CRC_FUNC_TYPE_CRC8) {
                                 crc8fn_t fn = (crc8fn_t)(fntable[j].fn);
-                                fntable[j].temp_crc = (uint32_t) fn( vec, i );
-                        }
-                        else if( fntable[j].fntype == CRC_FUNC_TYPE_CRC16 ) {
+
+                                fntable[j].temp_crc = (uint32_t) fn(vec, i);
+                        } else if (fntable[j].fntype == CRC_FUNC_TYPE_CRC16) {
                                 crc16fn_t fn = (crc16fn_t)(fntable[j].fn);
-                                fntable[j].temp_crc = (uint32_t) fn( vec, i );
-                        }
-                        else if( fntable[j].fntype == CRC_FUNC_TYPE_CRC32 ) {
+
+                                fntable[j].temp_crc = (uint32_t) fn(vec, i);
+                        } else if (fntable[j].fntype == CRC_FUNC_TYPE_CRC32) {
                                 crc32fn_t fn = (crc32fn_t)(fntable[j].fn);
-                                fntable[j].temp_crc = (uint32_t) fn( vec, i );
-                        }
-                        else {
+
+                                fntable[j].temp_crc = (uint32_t) fn(vec, i);
+                        } else {
                                 fntable[j].temp_crc = 0;
                         }
 
                 }
 
-                for(k=TAG_ID_START;k!=TAG_ID_END;k<<=1) {
+                for (k = TAG_ID_START; k != TAG_ID_END; k <<= 1) {
                         int index = -1;
 
-                        for(j=0;j<DIM(fntable);j++) {
+                        for (j = 0; j < DIM(fntable); j++) {
 
-                                if( (fntable[j].tag & TAG_REQ_CLMUL) && (!pclmulqdq_available) ) {
+                                if ((fntable[j].tag & TAG_REQ_CLMUL) &&
+                                                (!pclmulqdq_available)) {
                                         continue;
                                 }
 
-                                if (index == -1){
-                                        if(fntable[j].tag & k){
+                                if (index == -1) {
+                                        if (fntable[j].tag & k)
                                                 index = j;
-                                        }
+
                                         continue;
                                 }
 
-                                if((fntable[j].tag & k) && (fntable[j].temp_crc != fntable[index].temp_crc)){
+                                if ((fntable[j].temp_crc !=
+                                                fntable[index].temp_crc) &&
+                                                (fntable[j].tag & k)) {
                                         printf("Error! CRC's do not match!\n"
                                                "    %s() = 0x%x\n"
                                                "    %s() = 0x%x\n"
                                                "    payload size %d\n",
-                                               fntable[j].ctx,
-                                               fntable[j].temp_crc,
-                                               fntable[index].ctx,
-                                               fntable[index].temp_crc,
-                                               i );
+                                                fntable[j].ctx,
+                                                fntable[j].temp_crc,
+                                                fntable[index].ctx,
+                                                fntable[index].temp_crc, i);
                                         errcnt++;
                                         /* exit(1); */
                                 }
@@ -780,10 +750,10 @@ conf_test(void)
                 }
         }
 
-        if(vec!=NULL)
+        if (vec != NULL)
                 free(vec);
 
-        if(errcnt) {
+        if (errcnt) {
                 printf("!!! VECTOR RANGE TEST FAILED !!!\n");
                 return -1;
         } else {
@@ -801,49 +771,59 @@ conf_test(void)
 static void
 print_help(void)
 {
-        printf("crctest [-h] \n"
-               "        [-c CPUNUMBER] \n"
-               "        [-r VECTOR_SIZE_START] \n"
-               "        [-i NUM_ITERATIONS] \n"
-               "        [-s [VECTOR_SIZE|VECTOR_SIZE_END] ] \n"
-               "        [-f [FN1,FN2,...,FNN][, ] ] \n"
-               "        [-l [ALG1,ALG2,...,ALGN][, ] ]\n"
-               "        [-a [APP1,APP2,...,APPN][, ] ]\n\n"
-               "        -h                   :print help\n"
-               "        -c CPUNUMBER         :set CPU number to run thread\n"
-               "        -r VECTOR_SIZE_START :runs test across range of vectors\n"
-               "        -i NUM_ITERATIONS    :set number of iterations x 1000\n"
-               "        -s [VECTOR_SIZE|VECTOR_SIZE_END]\n"
-               "                             :set test vector size in bytes or end of vector size for range check\n"
-               "        -f [<function type 1>],[<function type 2>],...\n"
-               "                             :narrow down test base by given function type(s)\n"
-               "               Available function types are:\n"
-               "               - FPCRC16, FPCRC11, FPCRC7 for Framing Protocol CRCs\n"
-               "               - IUUPCRC6, IUUPCRC10 for IuUP Protocol CRCs\n"
-               "               - LTECRC24A, LTECRC24B for LTE PHY CRCs\n"
-               "               - SCTPCRC32C for SCTP Protocol CRC32c\n"
-               "               - WIMAXCRC32, WIMAXHCS for IEEE802.16 Protocol CRCs\n"
-               "               - TCPIPSUM16, UDPIPV4SUM for TCP/IP checksum\n"
-               "        -l [LUT|SLICE|CLMUL],...\n"
-               "                             :narrow down test base by given algorithm type(s)\n"
-               "        -a [FP|IUUP|LTE|SCTP|WIMAX],... \n"
-               "                             :narrow down test base by given application type(s)\n"
-               "               Available application types are:\n"
-               "               - FP for Framing Protocol\n"
-               "               - IUUP for IuUP Protocol\n"
-               "               - LTE for LTE PHY\n"
-               "               - SCTP for SCTP Protocol\n"
-               "               - WIMAX for IEEE802.16 Protocol\n"
-               "               - TCPIP for TCP/IP\n"
-               " Examples:\n"
-               "   crctest -c 7 -s 100 -i 1000\n"
-               "   Runs tests pinned to CPU ID 7 for vector size 100 bytes,\n"
-               "   1000 000 iterations.\n\n"
-               "   crctest -r 40 -s 100 -i 10\n"
-               "   Runs tests on vector range from 40 to 100 bytes,\n"
-               "   10 000 iterations for each vector from the range.\n"
-               "   \n\n"
-               );
+        printf("crctest [-h]\n"
+                "        [-c CPUNUMBER]\n"
+                "        [-r VECTOR_SIZE_START]\n"
+                "        [-i NUM_ITERATIONS]\n"
+                "        [-s [VECTOR_SIZE|VECTOR_SIZE_END] ]\n"
+                "        [-f [FN1,FN2,...,FNN][, ] ]\n"
+                "        [-l [ALG1,ALG2,...,ALGN][, ] ]\n"
+                "        [-a [APP1,APP2,...,APPN][, ] ]\n\n"
+                "        -h                   :print help\n"
+                "        -c CPUNUMBER         :set CPU number to run thread\n"
+                "        -r VECTOR_SIZE_START :runs test across range of "
+                "vectors\n"
+                "        -i NUM_ITERATIONS    :set number of iterations x "
+                "1000\n"
+                "        -s [VECTOR_SIZE|VECTOR_SIZE_END]\n"
+                "                             :set test vector size in bytes "
+                "or end of vector size for range check\n"
+                "        -f [<function type 1>],[<function type 2>],...\n"
+                "                             :narrow down test base by given "
+                "function type(s)\n"
+                "               Available function types are:\n"
+                "               - FPCRC16, FPCRC11, FPCRC7 for Framing "
+                "Protocol CRCs\n"
+                "               - IUUPCRC6, IUUPCRC10 for IuUP Protocol CRCs\n"
+                "               - LTECRC24A, LTECRC24B for LTE PHY CRCs\n"
+                "               - SCTPCRC32C for SCTP Protocol CRC32c\n"
+                "               - WIMAXCRC32, WIMAXHCS for IEEE802.16 Protocol "
+                "CRCs\n"
+                "               - TCPIPSUM16, UDPIPV4SUM for TCP/IP checksum\n"
+                "               - ETHERCRC32, CABLECRC16 for Cable CRCs\n"
+                "        -l [LUT|SLICE|CLMUL],...\n"
+                "                             :narrow down test base by given "
+                "algorithm type(s)\n"
+                "        -a [FP|IUUP|LTE|SCTP|WIMAX],...\n"
+                "                             :narrow down test base by given "
+                "application type(s)\n"
+                "               Available application types are:\n"
+                "               - FP for Framing Protocol\n"
+                "               - IUUP for IuUP Protocol\n"
+                "               - LTE for LTE PHY\n"
+                "               - SCTP for SCTP Protocol\n"
+                "               - WIMAX for IEEE802.16 Protocol\n"
+                "               - TCPIP for TCP/IP\n"
+                "               - CABLE for Cable\n"
+                " Examples:\n"
+                "   crctest -c 7 -s 100 -i 1000\n"
+                "   Runs tests pinned to CPU ID 7 for vector size 100 bytes,\n"
+                "   1000 000 iterations\n\n"
+                "   crctest -r 40 -s 100 -i 10\n"
+                "   Runs tests on vector range from 40 to 100 bytes,\n"
+                "   10 000 iterations for each vector from the range.\n"
+                "\n\n"
+                );
 }
 
 /**
@@ -859,92 +839,89 @@ print_help(void)
  *
  */
 static void
-select_test_groups(const struct enum_map *pmap,
-                   const unsigned int map_len,
-                   const char *user_tags)
+select_test_groups(const struct enum_map *pmap, const unsigned int map_len,
+        const char *user_tags)
 {
         static int reset_test_exec = 1;
         static int restrictive_tags = 0;
 
-        unsigned int i,j;
+        unsigned int i, j;
         char *pch = NULL;
         uint64_t tag_sum = 0;
         char *user_tags_cpy = NULL;
 
-        user_tags_cpy = (char*) malloc(strlen(user_tags) + 1);
-        if(user_tags_cpy == NULL) {
-                printf( "Memory allocation error in %s at %d. Exiting program ...\n",
-                        __FILE__, __LINE__ );
+        user_tags_cpy = (char *)malloc(strlen(user_tags) + 1);
+        if (user_tags_cpy == NULL) {
+                printf("Memory allocation error in %s at %d. "
+                        "Exiting program ...\n", __FILE__, __LINE__);
                 exit(EXIT_FAILURE);
         }
-        strncpy(user_tags_cpy, user_tags, strlen(user_tags) );
+        strncpy(user_tags_cpy, user_tags, strlen(user_tags));
 
         /**
          * Reset all exec bits in the all available test
          * later on some test will be enabled according to user's selection
          */
-        if(reset_test_exec){
-                for(i=0;i<DIM(fntable);i++){
+        if (reset_test_exec) {
+                for (i = 0; i < DIM(fntable); i++)
                         fntable[i].tag &= (~TAG_EXECUTE);
-                }
+
                 reset_test_exec = 0; /**<set to 0 to not execute reset again */
         }
 
-        if(! restrictive_tags)
+        if (!restrictive_tags)
                 printf("Test execution filter: ");
         else
                 printf(" && ");
 
-
-        for( i=0, pch = strtok(user_tags_cpy, " ,") ;
+        for (i = 0, pch = strtok(user_tags_cpy, " ,");
              pch != NULL;
-             i++, pch = strtok(NULL, " ,") ) {
+             i++, pch = strtok(NULL, " ,")) {
                 /**
                  * Match user selection with available enums
-                 * On success value of tag will be added up to previous selections (if any)
+                 * On success value of tag will be added up to
+                 * previous selections (if any)
                  */
 
-                printf("%s%s", (i==0) ? "( " : " || ", pch );
+                printf("%s%s", (i == 0) ? "( " : " || ", pch);
 
-                for(j=0; j<map_len;j++){
-                        if(strcasecmp( pch, pmap[j].string_name ) == 0){
+                for (j = 0; j < map_len; j++) {
+                        if (strcasecmp(pch, pmap[j].string_name) == 0) {
                                 tag_sum |= pmap[j].tag;
                                 break;
                         }
                 }
 
-                if(j >= map_len){
-                        printf("\n\"%s\" is not a valid selection\n\n",pch);
+                if (j >= map_len) {
+                        printf("\n\"%s\" is not a valid selection\n\n", pch);
                         print_help();
                         exit(EXIT_FAILURE);
                 }
         }
 
-        if(i>0)
+        if (i > 0)
                 printf(" )");
 
-        for(i=0; i<DIM(fntable); i++){
-                if(! restrictive_tags){
+        for (i = 0; i < DIM(fntable); i++) {
+                if (!restrictive_tags) {
                         /**
                          * Expand test base by following tests (enum_sum)
                          */
-                        if(fntable[i].tag & tag_sum){
+                        if (fntable[i].tag & tag_sum)
                                 fntable[i].tag |= TAG_EXECUTE;
-                        }
                 } else {
                         /**
-                         * Remove tests from test base by following tests (enum_sum)
+                         * Remove tests from test base by following tests
+                         * (enum_sum)
                          */
-                        if( (fntable[i].tag & TAG_EXECUTE) ){
-                                if(! (fntable[i].tag & tag_sum) ){
+                        if ((fntable[i].tag & TAG_EXECUTE))
+                                if (!(fntable[i].tag & tag_sum))
                                         fntable[i].tag &= (~TAG_EXECUTE);
-                                }
-                        }
 
                 }
         }
 
-        if(user_tags_cpy!=NULL)
+        if (user_tags_cpy != NULL)
                 free(user_tags_cpy);
 
         restrictive_tags++;
@@ -959,7 +936,7 @@ select_test_groups(const struct enum_map *pmap,
  * @return Program status
  */
 int
-main( int argc, char **argv )
+main(int argc, char **argv)
 {
         cpu_set_t cpuset;
         int cpuid = 0, res, command, average = 0;
@@ -976,18 +953,18 @@ main( int argc, char **argv )
          * Parse command line options
          *
          */
-        while((command = getopt(argc, argv, "hr:c:s:i:t:a:l:f:")) != -1){
+        while ((command = getopt(argc, argv, "hr:c:s:i:t:a:l:f:")) != -1) {
 
-                switch(command){
+                switch (command) {
 
                 case 'h':
                         print_help();
-                        return(EXIT_SUCCESS);
+                        return EXIT_SUCCESS;
 
                 case 'r':
-                        vector_size_start = strtoul(optarg,NULL,10);
+                        vector_size_start = strtoul(optarg, NULL, 10);
                         average = 1;
-                        if(vector_size_start>16000) {
+                        if (vector_size_start > 16000) {
                                 printf("Vector size is limited to 16000!\n");
                                 exit(EXIT_FAILURE);
                         }
@@ -999,39 +976,44 @@ main( int argc, char **argv )
                         break;
 
                 case 's':
-                        vector_size_end = strtoul(optarg,NULL,10);
-                        if(vector_size_end>16000) {
+                        vector_size_end = strtoul(optarg, NULL, 10);
+                        if (vector_size_end > 16000) {
                                 printf("Vector size is limited to 16000!\n");
                                 exit(EXIT_FAILURE);
                         }
                         break;
 
                 case 'i':
-                        num_of_iterations = strtoul(optarg,NULL,10) * 1000;
-                        if( num_of_iterations == 0 || num_of_iterations > (20*1000*1000) ) {
-                                printf("Invalid number of iterations %u error! Valid range is 1 to 20 000 000\n",
-                                       num_of_iterations );
+                        num_of_iterations = strtoul(optarg, NULL, 10) * 1000;
+                        if (num_of_iterations == 0 ||
+                                        num_of_iterations > (20*1000*1000)) {
+                                printf("Invalid number of iterations %u error! "
+                                        "Valid range is 1 to 20 000 000\n",
+                                        num_of_iterations);
                                 exit(EXIT_FAILURE);
                         }
                         break;
 
                 case 'a':
-                        select_test_groups(enum_app_map,DIM(enum_app_map), optarg);
+                        select_test_groups(enum_app_map, DIM(enum_app_map),
+                                optarg);
                         break;
 
                 case 'l':
-                        select_test_groups(enum_alg_map,DIM(enum_alg_map), optarg);
+                        select_test_groups(enum_alg_map, DIM(enum_alg_map),
+                                optarg);
                         break;
 
                 case 'f':
-                        select_test_groups(enum_func_map, DIM(enum_func_map), optarg);
+                        select_test_groups(enum_func_map, DIM(enum_func_map),
+                                optarg);
                         break;
 
                 default:
                         printf("No such option: %c\n", optopt);
                 case '?':
                         print_help();
-                        return(EXIT_SUCCESS);
+                        return EXIT_SUCCESS;
                 }
         }
 
@@ -1041,31 +1023,28 @@ main( int argc, char **argv )
          */
         printf("\nCPU ID is %d\n", cpuid);
 
-        if( average ) {
-                if( vector_size_start > vector_size_end ) {
-                        printf("Vector size range start %u is greater than end %u!\n",
-                               vector_size_start,
-                               vector_size_end );
+        if (average) {
+                if (vector_size_start > vector_size_end) {
+                        printf("Vector size range start %u is greater than end "
+                                "%u!\n", vector_size_start, vector_size_end);
                         exit(EXIT_FAILURE);
                 }
 
-                if( vector_size_start == vector_size_end ) {
-                        printf("Vector size range start and end are the same %u!\n",
-                               vector_size_start );
+                if (vector_size_start == vector_size_end) {
+                        printf("Vector size range start and end are the same "
+                                "%u!\n", vector_size_start);
                         exit(EXIT_FAILURE);
                 }
 
-                printf("Test range of vector sizes %u..%u\n",
-                       vector_size_start,
-                       vector_size_end);
+                printf("Test range of vector sizes %u..%u\n", vector_size_start,
+                        vector_size_end);
 
         } else {
                 printf("Vector size is %u\n", vector_size_end);
         }
 
         printf("Number of iterations per vector is %u (%u x 1000)\n",
-               num_of_iterations,
-               num_of_iterations / 1000);
+                num_of_iterations, num_of_iterations / 1000);
 
         /**
          * Get CPU clock
@@ -1078,10 +1057,10 @@ main( int argc, char **argv )
          *
          */
         CPU_ZERO(&cpuset);
-        CPU_SET(cpuid,&cpuset);
-        res = sched_setaffinity( 0, sizeof(cpuset), &cpuset );
-        ASSERT( res == 0 );
-        if(res!=0) {
+        CPU_SET(cpuid, &cpuset);
+        res = sched_setaffinity(0, sizeof(cpuset), &cpuset);
+        ASSERT(res == 0);
+        if (res != 0) {
                 perror("Error when setting core affinity ");
                 exit(EXIT_FAILURE);
         }
@@ -1095,36 +1074,35 @@ main( int argc, char **argv )
          * Check if PCLMULQDQ instruction is supported
          * by testing variable initialized by CRCInit().
          */
-        if( pclmulqdq_available ) {
-                printf( "PCLMULQDQ supported!\n");
-        } else {
-                printf( "! PCLMULQDQ NOT supported !\n");
-        }
+        if (pclmulqdq_available)
+                printf("PCLMULQDQ supported!\n");
+        else
+                printf("! PCLMULQDQ NOT supported !\n");
 
         /**
          * Run conformance test
          */
-        if( conf_test() != 0 ) {
+        if (conf_test() != 0)
                 exit(EXIT_FAILURE);
-        }
 
         /**
          * Now we can prepare vectors for performance tests
          */
-        if( average ) {
+        if (average) {
                 uint8_t *cb = NULL;
+
                 vector_data_dim = vector_size_end - vector_size_start;
                 cb = generate_vector(vector_size_end);
-                vector_size = malloc( sizeof(uint32_t) * vector_data_dim );
-                vector_data = malloc( sizeof(void *) * vector_data_dim );
-                if( vector_size==NULL || vector_data==NULL ) {
+                vector_size = malloc(sizeof(uint32_t) * vector_data_dim);
+                vector_data = malloc(sizeof(void *) * vector_data_dim);
+                if (vector_size == NULL || vector_data == NULL) {
                         perror("Memory allocation error ");
                         exit(EXIT_FAILURE);
                 }
-                ASSERT( cb != NULL );
-                ASSERT( vector_data != NULL );
-                ASSERT( vector_size != NULL );
-                for(i=0;i<vector_data_dim;i++) {
+                ASSERT(cb != NULL);
+                ASSERT(vector_data != NULL);
+                ASSERT(vector_size != NULL);
+                for (i = 0; i < vector_data_dim; i++) {
                         vector_size[i] = vector_size_start + i + 1;
                         vector_data[i] = cb;
                 }
@@ -1135,37 +1113,39 @@ main( int argc, char **argv )
         /**
          * Run performance tests
          */
-        printf( "--------------------------------------------------------\n"
-                "Function                     CRC   Time      Cycles     \n"
-                "Name                         Size  [s]       per byte   \n"
+        printf("--------------------------------------------------------\n"
+                "Function                     CRC   Time      Cycles\n"
+                "Name                         Size  [s]       per byte\n"
                 "--------------------------------------------------------\n");
 
-        for(i=0;i<DIM(fntable);i++) {
+        for (i = 0; i < DIM(fntable); i++) {
 
-                if(! (fntable[i].tag & TAG_EXECUTE) )
+                if (!(fntable[i].tag & TAG_EXECUTE))
                         continue;
 
-                if( (fntable[i].tag & TAG_REQ_CLMUL) && (!pclmulqdq_available) ) {
-                        printf( "%s requires PCLMULQDQ instruction unsupported on current platform. Skipping ...\n",
-                                fntable[i].ctx );
+                if ((fntable[i].tag & TAG_REQ_CLMUL) &&
+                                (!pclmulqdq_available)) {
+                        printf("%s requires PCLMULQDQ instruction unsupported "
+                                "on current platform. Skipping ...\n",
+                                fntable[i].ctx);
                         continue;
                 }
 
-                crc_perf_test( fntable[i].fntype,
-                               fntable[i].fn,
-                               vector_data,
-                               vector_size,
-                               vector_data_dim,
-                               num_of_iterations,
-                               fntable[i].ctx );
+                crc_perf_test(fntable[i].fntype,
+                                fntable[i].fn,
+                                vector_data,
+                                vector_size,
+                                vector_data_dim,
+                                num_of_iterations,
+                                fntable[i].ctx);
         }
 
-        printf( "--------------------------------------------------------\n" );
+        printf("--------------------------------------------------------\n");
 
-        if( average ) {
-                free( vector_size );
-                free( vector_data[0] );
-                free( vector_data );
+        if (average) {
+                free(vector_size);
+                free(vector_data[0]);
+                free(vector_data);
         }
 
         return EXIT_SUCCESS;

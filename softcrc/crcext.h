@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2009-2017, Intel Corporation
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of Intel Corporation nor the names of its contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,7 +27,7 @@
 
 /**
  * Header file with CRC external definitions
- * 
+ *
  */
 
 #ifndef __CRCEXT_H__
@@ -39,11 +39,9 @@
  */
 extern int pclmulqdq_available;
 
-
-/** 
+/**
  * @brief Initializes CRC module.
  * @note It is mandatory to run it before using any of CRC API's.
  */
-extern void CRCInit( void );
-
+extern void CRCInit(void);
 #endif /* __CRCEXT_H__ */

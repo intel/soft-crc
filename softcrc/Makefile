@@ -126,8 +126,9 @@ CHECKPATCH?=checkpatch.pl
 .PHONY: style
 style:
 	$(CHECKPATCH) --no-tree --no-signoff --emacs \
-	--ignore CODE_INDENT,INITIALISED_STATIC,LEADING_SPACE,SPLIT_STRING,NEW_TYPEDEFS,\
-	UNSPECIFIED_INT,ARRAY_SIZE,BLOCK_COMMENT_STYLE,CONSTANT_COMPARISON \
+	--ignore CODE_INDENT,INITIALISED_STATIC,LEADING_SPACE,SPLIT_STRING,\
+	NEW_TYPEDEFS,UNSPECIFIED_INT,ARRAY_SIZE,BLOCK_COMMENT_STYLE,\
+	CONSTANT_COMPARISON,PREFER_PACKED \
 	-f crc.c -f crc.h -f crcr.c -f crcr.h -f crc_rnc.c -f crc_rnc.h \
 	-f crc_sctp.c -f crc_sctp.h -f crc_tcpip.c -f crc_tcpip.h \
 	-f crc_wimax.c -f crc_wimax.h -f crc_ether.c -f crc_ether.h \
@@ -136,9 +137,8 @@ style:
 CPPCHECK?=cppcheck
 .PHONY: cppcheck
 cppcheck:
-	$(CPPCHECK) --enable=warning,portability,performance,unusedFunction,missingInclude \
-	--std=c99 --template=gcc --suppress=uninitvar \
+	$(CPPCHECK) --enable=warning,portability,performance,unusedFunction,\
+	missingInclude --std=c99 --template=gcc --suppress=uninitvar \
 	crc.c crc.h crcr.c crcr.h crc_rnc.c crc_rnc.h crc_sctp.c crc_sctp.h \
-	crc_tcpip.c crc_tcpip.h crc_wimax.c crc_wimax.h crc_ether.c crc_ether.h \
-	crc_cable.c crc_cable.h main.c crcext.h
-
+	crc_tcpip.c crc_tcpip.h crc_wimax.c crc_wimax.h crc_ether.c \
+	crc_ether.h crc_cable.c crc_cable.h main.c crcext.h

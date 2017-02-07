@@ -51,7 +51,7 @@
  *
  */
 static uint32_t
-reflect_32bits( const uint32_t x );
+reflect_32bits(const uint32_t x);
 
 /**
  * ========================
@@ -69,15 +69,15 @@ reflect_32bits( const uint32_t x );
  * @return reflected value
  */
 static uint32_t
-reflect_32bits( const uint32_t val )
+reflect_32bits(const uint32_t val)
 {
-    uint32_t i, res = 0;
+        uint32_t i, res = 0;
 
-    for (i = 0; i < 32; i++)
-        if ((val & (1 << i)) != 0)
-            res |= (uint32_t)(1 << (31 - i));
+        for (i = 0; i < 32; i++)
+                if ((val & (1 << i)) != 0)
+                        res |= (uint32_t)(1 << (31 - i));
 
-    return res;
+        return res;
 }
 
 /**
@@ -87,20 +87,23 @@ reflect_32bits( const uint32_t val )
  * @param rlut pointer to reflected 256 x 32bits look-up-table to be initialized
  */
 void
-crcr32_init_lut( const uint32_t poly,
-                 uint32_t *rlut )
+crcr32_init_lut(const uint32_t poly, uint32_t *rlut)
 {
         uint_fast32_t i, j;
 
-        if(rlut == NULL)
+        if (rlut == NULL)
                 return;
 
-        for (i = 0; i < 256; i++){
+        for (i = 0; i < 256; i++) {
+                /**
+                 * i = reflect_8bits(i);
+                 * crc = (i << 24);
+                 */
                 uint_fast32_t crc = reflect_32bits(i);
 
-                for (j = 0; j < 8; j++){
+                for (j = 0; j < 8; j++) {
                         if (crc & 0x80000000L)
-                                crc = (crc << 1) ^ poly ;
+                                crc = (crc << 1) ^ poly;
                         else
                                 crc <<= 1;
                 }

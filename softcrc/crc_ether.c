@@ -50,7 +50,7 @@ static uint32_t ether_crc32_lut[256];
  */
 void EtherCrcInit(void)
 {
-        crcr32_init_lut( ETHERNET_CRC32_POLYNOMIAL, ether_crc32_lut );
+        crcr32_init_lut(ETHERNET_CRC32_POLYNOMIAL, ether_crc32_lut);
 }
 
 /**
@@ -62,20 +62,20 @@ void EtherCrcInit(void)
  * @return New CRC value
  */
 uint32_t
-EtherCrc32CalculateLUT( const uint8_t *data,
-                        uint32_t data_len )
+EtherCrc32CalculateLUT(const uint8_t *data,
+                        uint32_t data_len)
 {
-        return ~crcr32_calc_lut( data,
+        return ~crcr32_calc_lut(data,
                                  data_len,
                                  0xffffffff,
-                                 ether_crc32_lut );
+                                 ether_crc32_lut);
 }
 
 uint32_t
-EtherCrc32CalculateCLMUL( const uint8_t *data,
-                        uint32_t data_len )
+EtherCrc32CalculateCLMUL(const uint8_t *data,
+                        uint32_t data_len)
 {
-        return ~crc32_refl_by8( 0xffffffff,
+        return ~crc32_refl_by8(0xffffffff,
                                 data,
-                                data_len );
+                                data_len);
 }

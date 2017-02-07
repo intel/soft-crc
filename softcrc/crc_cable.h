@@ -52,6 +52,6 @@ extern void CableCrcInit(void);
  *
  * @return New CRC value
  */
-extern uint16_t CableCrc16CalculateLUT( const uint8_t *data, uint32_t data_len );
+extern uint16_t CableCrc16CalculateLUT(const uint8_t *data, uint32_t data_len);
 
 #endif /* __CRC_CABLE_H__ */

@@ -49,7 +49,7 @@ static uint32_t cable_crc16_lut[256];
  */
 void CableCrcInit(void)
 {
-        crcr32_init_lut( CRC16_X_25_POLYNOMIAL << 16, cable_crc16_lut );
+        crcr32_init_lut(CRC16_X_25_POLYNOMIAL << 16, cable_crc16_lut);
 }
 
 /**
@@ -61,10 +61,10 @@ void CableCrcInit(void)
  * @return New CRC value
  */
 uint16_t
-CableCrc16CalculateLUT( const uint8_t *data,
-                        uint32_t data_len )
+CableCrc16CalculateLUT(const uint8_t *data,
+                        uint32_t data_len)
 {
-        return (uint16_t)(~crcr32_calc_lut( data,
+        return (uint16_t)(~crcr32_calc_lut(data,
 					    data_len,
 					    0xffff,
 					    cable_crc16_lut));
