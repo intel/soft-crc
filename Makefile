@@ -1,5 +1,5 @@
 ###############################################################################
-# Makefile script for RNC CRC Test Application
+# Makefile script for CRC Test Application
 #
 # @par
 # Copyright (c) 2009-2017, Intel Corporation
@@ -128,7 +128,7 @@ style:
 	$(CHECKPATCH) --no-tree --no-signoff --emacs \
 	--ignore CODE_INDENT,INITIALISED_STATIC,LEADING_SPACE,SPLIT_STRING,\
 	NEW_TYPEDEFS,UNSPECIFIED_INT,ARRAY_SIZE,BLOCK_COMMENT_STYLE,\
-	CONSTANT_COMPARISON,PREFER_PACKED \
+	CONSTANT_COMPARISON,PREFER_PACKED,GLOBAL_INITIALISERS \
 	-f crc.c -f crc.h -f crcr.c -f crcr.h -f crc_rnc.c -f crc_rnc.h \
 	-f crc_sctp.c -f crc_sctp.h -f crc_tcpip.c -f crc_tcpip.h \
 	-f crc_wimax.c -f crc_wimax.h -f crc_ether.c -f crc_ether.h \

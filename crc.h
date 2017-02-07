@@ -1,33 +1,32 @@
-/*
- * Copyright (c) 2009-2017, Intel Corporation
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- *     * Redistributions of source code must retain the above copyright notice,
- *       this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of Intel Corporation nor the names of its contributors
- *       may be used to endorse or promote products derived from this software
- *       without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+/*******************************************************************************
+ Copyright (c) 2009-2017, Intel Corporation
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+     * Redistributions of source code must retain the above copyright notice,
+       this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+     * Neither the name of Intel Corporation nor the names of its contributors
+       may be used to endorse or promote products derived from this software
+       without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************/
 
 /**
  * Header file for module with implementation of IuUP and FP CRCs
- * 
  */
 
 #ifndef __CRC_H__
@@ -68,18 +67,15 @@ struct crc_pclmulqdq_ctx {
         __m128i p_res;
 };
 
-
 /**
  * Functions and prototypes
- * 
  */
 
-
-/** 
+/**
  * @brief Swaps bytes in 16 bit word
- * 
+ *
  * @param val 16 bit data value
- * 
+ *
  * @return byte swapped value
  */
 __forceinline uint16_t bswap2(const uint16_t val)
@@ -87,7 +83,7 @@ __forceinline uint16_t bswap2(const uint16_t val)
         return (uint16_t) ((val >> 8) | (val << 8));
 }
 
-/** 
+/**
  * @brief Swaps bytes in 32 bit word
  * ABCD -> DCBA
  *
@@ -97,34 +93,33 @@ __forceinline uint16_t bswap2(const uint16_t val)
  */
 __forceinline uint32_t bswap4(const uint32_t val)
 {
-        return ( (val >> 24) |                      /**< A*/
-                 ( (val & 0xff0000) >> 8 ) |        /**< B*/
-                 ( (val & 0xff00) << 8 ) |          /**< C*/
-                 (val << 24)                        /**< D*/ );
+        return ((val >> 24) |             /**< A*/
+                ((val & 0xff0000) >> 8) | /**< B*/
+                ((val & 0xff00) << 8) |   /**< C*/
+                (val << 24));             /**< D*/
 }
 
-
-/** 
+/**
  * @brief Initializes look-up-table (LUT) for given 8 bit polynomial
- * 
+ *
  * @param poly CRC polynomial
  * @param lut pointer to look-up-table to be initialized
  */
 void crc8_init_lut(const uint8_t poly, uint8_t *lut);
 
-/** 
+/**
  * @brief Calculates 8 bit CRC using LUT method.
- * 
+ *
  * @param crc CRC initial value
  * @param data pointer to data block to calculate CRC for
  * @param data_len size of data block
  * @param lut 256x8bits look-up-table pointer
- * 
+ *
  * @return New CRC value
  */
 __forceinline
 uint8_t crc8_calc_lut(const uint8_t *data,
-                       uint32_t data_len,
+                      uint32_t data_len,
                       uint8_t crc,
                       const uint8_t *lut)
 {
@@ -137,22 +132,22 @@ uint8_t crc8_calc_lut(const uint8_t *data,
         return crc;
 }
 
-/** 
+/**
  * @brief Initializes look-up-table (LUT) for given 16 bit polynomial
- * 
+ *
  * @param poly CRC polynomial
  * @param lut pointer to 256x16bits look-up-table to be initialized
  */
 void crc16_init_lut(const uint16_t poly, uint16_t *lut);
 
-/** 
+/**
  * @brief Calculates 16 bit CRC using LUT method.
- * 
+ *
  * @param crc CRC initial value
  * @param data pointer to data block to calculate CRC for
  * @param data_len size of data block
  * @param lut 256x16bits look-up-table pointer
- * 
+ *
  * @return New CRC value
  */
 __forceinline
@@ -170,22 +165,22 @@ uint16_t crc16_calc_lut(const uint8_t *data,
         return crc;
 }
 
-/** 
+/**
  * @brief Initializes look-up-table (LUT) for given 32 bit polynomial
- * 
+ *
  * @param poly CRC polynomial
  * @param lut pointer to 256x32bits look-up-table to be initialized
  */
 void crc32_init_lut(const uint32_t poly, uint32_t *lut);
 
-/** 
+/**
  * @brief Calculates 32 bit CRC using LUT method.
- * 
+ *
  * @param crc CRC initial value
  * @param data pointer to data block to calculate CRC for
  * @param data_len size of data block
  * @param lut 256x32bits look-up-table pointer
- * 
+ *
  * @return New CRC value
  */
 __forceinline
@@ -203,28 +198,28 @@ uint32_t crc32_calc_lut(const uint8_t *data,
         return crc;
 }
 
-/** 
+/**
  * @brief Initializes look up tables for slice-By-2 method.
- * 
+ *
  * @param poly CRC polynomial
  * @param slice1 slice-by-2 look-up-table 1
  * @param slice2 slice-by-2 look-up-table 2
- * 
+ *
  * @return New CRC value
  */
 void crc16_init_slice2(const uint16_t poly,
                        uint16_t *slice1,
                        uint16_t *slice2);
 
-/** 
+/**
  * @brief Calculates 16 bit CRC using Slice-By-2 method.
- * 
+ *
  * @param crc CRC initial value
  * @param data pointer to data block to calculate CRC for
  * @param data_len size of data block
  * @param slice1 256x16bits slice look-up-table 1
  * @param slice2 256x16bits slice look-up-table 2
- * 
+ *
  * @return New CRC value
  */
 __forceinline
@@ -255,24 +250,24 @@ uint16_t crc16_calc_slice2(const uint8_t *data,
         return crc;
 }
 
-/** 
+/**
  * @brief Initializes look up tables for slice-By-4 method.
- * 
+ *
  * @param poly CRC polynomial
  * @param slice1 256x32bits slice look-up-table 1
  * @param slice2 256x32bits slice look-up-table 2
  * @param slice3 256x32bits slice look-up-table 3
  * @param slice4 256x32bits slice look-up-table 4
- * 
+ *
  * @return New CRC value
  */
 void crc32_init_slice4(const uint32_t poly,
                        uint32_t *slice1, uint32_t *slice2,
                        uint32_t *slice3, uint32_t *slice4);
 
-/** 
+/**
  * @brief Calculates 32 bit CRC using Slice-By-4 method.
- * 
+ *
  * @param data pointer to data block to calculate CRC for
  * @param data_len size of data block
  * @param crc CRC initial value
@@ -280,7 +275,7 @@ void crc32_init_slice4(const uint32_t poly,
  * @param slice2 256x32bits slice look-up-table 2
  * @param slice3 256x32bits slice look-up-table 3
  * @param slice4 256x32bits slice look-up-table 4
- * 
+ *
  * @return New CRC value
  */
 __forceinline
@@ -295,18 +290,17 @@ uint32_t crc32_calc_slice4(const uint8_t *data,
                 return crc;
 
         if (unlikely(slice1 == NULL || slice2 == NULL ||
-                    slice3 == NULL || slice4 == NULL) )
+                     slice3 == NULL || slice4 == NULL))
                 return crc;
 
         crc = bswap4(crc);
         for (i = data_len & (~3), data += (data_len & (~3)); i != 0;
              i -= sizeof(uint32_t)) {
                 crc ^= (*((const uint32_t *)(data - i)));
-                crc =
-                        slice4[(uint8_t) (crc )     ] ^
-                        slice3[(uint8_t) (crc >> 8) ] ^
-                        slice2[(uint8_t) (crc >> 16)] ^
-                        slice1[(uint8_t) (crc >> 24)];
+                crc = slice4[(uint8_t)(crc)] ^
+                        slice3[(uint8_t)(crc >> 8)] ^
+                        slice2[(uint8_t)(crc >> 16)] ^
+                        slice1[(uint8_t)(crc >> 24)];
         }
         crc = bswap4(crc);
         for (i = data_len & 3, data += (data_len & 3); i != 0; i--)
@@ -317,21 +311,21 @@ uint32_t crc32_calc_slice4(const uint8_t *data,
 }
 
 
-/** 
+/**
  * @brief Initializes CRC computation context structure for given polynomial
- * 
+ *
  * @param pctx plcmulqdq CRC computation context structure to be initialized
  * @param poly CRC polynomial
  */
 void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
                           const uint64_t poly);
 
-/** 
+/**
  * @brief Shifts right 128 bit register by specified number of bytes
- * 
+ *
  * @param reg 128 bit value
  * @param num number of bytes to shift right \a reg by (0-16)
- * 
+ *
  * @return \a reg >> (\a num * 8)
  */
 __forceinline
@@ -342,12 +336,12 @@ __m128i xmm_shift_right(__m128i reg, const unsigned int num)
         return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
 }
 
-/** 
+/**
  * @brief Shifts left 128 bit register by specified number of bytes
- * 
+ *
  * @param reg 128 bit value
  * @param num number of bytes to shift left \a reg by (0-16)
- * 
+ *
  * @return \a reg << (\a num * 8)
  */
 __forceinline
@@ -358,10 +352,10 @@ __m128i xmm_shift_left(__m128i reg, unsigned int num)
         return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
 }
 
-/** 
+/**
  * @brief Performs one folding round
  *
- * Logically function operates as follows: 
+ * Logically function operates as follows:
  *     DATA = READ_NEXT_16BYTES();
  *     F1 = LSB8(FOLD)
  *     F2 = MSB8(FOLD)
@@ -372,7 +366,7 @@ __m128i xmm_shift_left(__m128i reg, unsigned int num)
  * @param data_block 16 byte data block
  * @param k1_k2 k1 and k2 constanst enclosed in XMM register
  * @param fold running 16 byte folded data
- * 
+ *
  * @return New 16 byte folded data
  */
 __forceinline
@@ -380,17 +374,18 @@ __m128i crc32_folding_round(const __m128i data_block,
                             const __m128i k1_k2,
                             const __m128i fold)
 {
+        __m128i tmp = _mm_clmulepi64_si128(fold, k1_k2, 0x11);
+
         return _mm_xor_si128(_mm_clmulepi64_si128(fold, k1_k2, 0x00),
-                             _mm_xor_si128(data_block,
-                                           _mm_clmulepi64_si128(fold, k1_k2, 0x11)));
+                             _mm_xor_si128(data_block, tmp));
 }
 
-/** 
+/**
  * @brief Performs Barret's reduction from 128 bits to 64 bits
- * 
+ *
  * @param data128 128 bits data to be reduced
  * @param k3_q k3 and Q constants enclosed in XMM register
- * 
+ *
  * @return data reduced to 64 bits
  */
 __forceinline
@@ -404,16 +399,16 @@ __m128i crc32_reduce_128_to_64(__m128i data128, const __m128i k3_q)
         data128 = _mm_xor_si128(_mm_clmulepi64_si128(tmp, k3_q, 0x01 /* k3 */),
                                 data128);
 
-        return _mm_srli_si128(_mm_slli_si128(data128,8), 8);
+        return _mm_srli_si128(_mm_slli_si128(data128, 8), 8);
 }
 
-/** 
+/**
  * @brief Performs Barret's reduction from 64 bits to 32 bits
- * 
+ *
  * @param data64 64 bits data to be reduced
  * @param k3_q k3 and Q constants enclosed in XMM register
  * @param p_res P constant enclosed in XMM register
- * 
+ *
  * @return data reduced to 32 bits
  */
 __forceinline
@@ -422,21 +417,19 @@ crc32_reduce_64_to_32(__m128i fold, const __m128i k3_q, const __m128i p_res)
 {
         __m128i temp;
 
-        temp = _mm_srli_si128(_mm_xor_si128(_mm_clmulepi64_si128(_mm_srli_si128(fold, 4),
-                                                                 k3_q, 0x10 /* Q */),
-                                            fold),
-                              4);
-
-        return _mm_extract_epi32(_mm_xor_si128(_mm_clmulepi64_si128(temp, p_res, 0 /* P */),
-                                               fold),
-                                 0);
+        temp = _mm_clmulepi64_si128(_mm_srli_si128(fold, 4),
+                                    k3_q, 0x10 /* Q */);
+        temp = _mm_srli_si128(_mm_xor_si128(temp, fold), 4);
+        temp = _mm_clmulepi64_si128(temp, p_res, 0 /* P */);
+        return _mm_extract_epi32(_mm_xor_si128(temp, fold), 0);
 }
 
-/** 
- * @brief Calculates 32 bit CRC for given \a data block by applying folding and reduction methods.
- * 
- * Algorithm operates on 32 bit CRCs so polynomials and initial values may need to be promoted to
- * 32 bits where required.
+/**
+ * @brief Calculates 32 bit CRC for given \a data block by applying folding and
+ *        reduction methods.
+ *
+ * Algorithm operates on 32 bit CRCs so polynomials and initial values may
+ * need to be promoted to 32 bits where required.
  *
  * @param crc initial CRC value (32 bit value)
  * @param data pointer to data block
@@ -483,7 +476,7 @@ crc32_calc_pclmulqdq(const uint8_t *data,
          * Load first 16 data bytes in \a fold and
          * set \a swap BE<->LE 16 byte conversion variable
          */
-        fold = _mm_loadu_si128((__m128i*) data);
+        fold = _mm_loadu_si128((__m128i *)data);
         swap = crc_xmm_be_le_swap128;
 
         /**
@@ -492,7 +485,7 @@ crc32_calc_pclmulqdq(const uint8_t *data,
          * Assumes: \a fold holds first 16 bytes of data
          */
 
-        if(unlikely(data_len<=16)) {
+        if (unlikely(data_len <= 16)) {
                 /**
                  * Data block fits into 16 byte block
                  * - adjust data block
@@ -504,8 +497,8 @@ crc32_calc_pclmulqdq(const uint8_t *data,
                 /**
                  * Apply CRC init value
                  */
-                temp = xmm_shift_left(_mm_insert_epi32(_mm_setzero_si128(), bswap4(crc), 0),
-                                      data_len - 4);
+                temp = _mm_insert_epi32(_mm_setzero_si128(), bswap4(crc), 0);
+                temp = xmm_shift_left(temp, data_len - 4);
                 fold = _mm_xor_si128(fold, temp);
         } else {
                 /**
@@ -524,17 +517,18 @@ crc32_calc_pclmulqdq(const uint8_t *data,
                  * get \a fold to BE format
                  */
                 fold = _mm_xor_si128(fold,
-                                     _mm_insert_epi32(_mm_setzero_si128(), crc, 0));
+                                     _mm_insert_epi32(_mm_setzero_si128(),
+                                                      crc, 0));
                 fold = _mm_shuffle_epi8(fold, swap);
 
                 /**
-                 * Load next 16 bytes of data and 
+                 * Load next 16 bytes of data and
                  * adjust \a fold & \a next_data as follows:
                  *
                  * CONCAT(fold,next_data) >> (n*8)
                  */
-                next_data = _mm_shuffle_epi8(_mm_loadu_si128((__m128i*)&data[16]),
-                                             swap);
+                next_data = _mm_loadu_si128((__m128i *)&data[16]);
+                next_data = _mm_shuffle_epi8(next_data, swap);
                 next_data = _mm_or_si128(xmm_shift_right(next_data, n),
                                          xmm_shift_left(fold, 16 - n));
                 fold = xmm_shift_right(fold, n);
@@ -554,31 +548,37 @@ crc32_calc_pclmulqdq(const uint8_t *data,
 
                 if (likely(data_len > 32)) {
                         /**
-                         * \a data_block needs to be at elast 48 bytes big to get here
+                         * \a data_block needs to be at least 48 bytes long
+                         * in order to get here
                          */
+                        __m128i new_data;
 
                         /**
                          * Main folding loop
-                         * - n is adjusted to point to next 16 data block to read
-                         *   (16+16) = 2x16; represent 2 first data blocks processed above
-                         *   (- n) is the number of zero bytes padded to the message
-                         *   in order to align it to 16 bytes
-                         * - we do not process last 16 bytes as it is processed separately
+                         * - n is adjusted to point to next 16 data block
+                         *   to read
+                         *   (16+16) = 2x16; represents 2 first data blocks
+                         *                   processed above
+                         *   (- n) is the number of zero bytes padded to
+                         *   the message in order to align it to 16 bytes
+                         * - the last 16 bytes is processed separately
                          */
-                        for (n = 16 + 16 - n; n < (data_len - 16); n += 16)
-                                fold = crc32_folding_round(_mm_shuffle_epi8(_mm_loadu_si128((__m128i*)(&data[n])),
-                                                                            swap),
-                                                           k, fold);
+                        for (n = 16 + 16 - n; n < (data_len - 16); n += 16) {
+                                new_data = _mm_loadu_si128((__m128i *)&data[n]);
+                                new_data = _mm_shuffle_epi8(new_data, swap);
+                                fold = crc32_folding_round(new_data, k, fold);
+                        }
 
                         /**
                          * The last folding round works always on 12 bytes
                          * (12 bytes of data and 4 zero bytes)
-                         * We use read from offset -4 to avoid 1 shift right operation.
+                         * Read from offset -4 is to avoid one
+                         * shift right operation.
                          */
-                        fold = crc32_folding_round(_mm_slli_si128( _mm_shuffle_epi8(_mm_loadu_si128((__m128i*)&data[n-4]),
-                                                                                    swap),
-                                                                   4),
-                                                    k, fold);
+                        new_data = _mm_loadu_si128((__m128i *)&data[n - 4]);
+                        new_data = _mm_shuffle_epi8(new_data, swap);
+                        new_data = _mm_slli_si128(new_data, 4);
+                        fold = crc32_folding_round(new_data, k, fold);
                 } /* if (data_len > 32) */
         }
 
