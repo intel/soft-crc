@@ -125,48 +125,18 @@ off to get actual performance data.
 
 3.  Program Compilation
 
-If your package includes the following files:
-    libcrc.a
-    crcext.h
-    main.c
-    Makefile
-    README
-and  some  additional  header  files, you  have  a  binary package. 
-Please refer  to Section 3.2 for build  instructions.
-
-In  all   other  cases,  please   refer  to  Section  3.1   for  build
-instructions.
-
-3.1 Source Package
-
-The program compiles on 64- and 32-bit Linux* as a user space program.
-It has been tested on:
-    - Fedora* 11, 64-bit, 2.6.29 kernel, GCC 4.4.0
-    - Fedora* 14, 32-bit, 2.6.35 kernel, GCC 4.5.1
-    - Fedora* 16, 64-bit, 3.1.0-7 kernel, GCC 4.6.3
-
-To  compile  the program,  please  run  the  "make" command.   If  you
-encounter problems with compilation on a 32-bit machine using ICC, you
-may  need to run  the "make  BUILD32=y" command  which will  force the
-compiler to use SSE4.2 instructions.
-
-For cross  compiling 32-bit  code on a  64-bit system, please  run the
-"make CROSSBUILD32=y" command.
-
-After  successful compilation,  the "crctest"  executable  file should
-appear in the folder.
-
-3.2 Binary Package
-
 The program compiles on 64-bit Linux* as a user space program.
 It has been tested on:
-    - Fedora* 11, 64-bit, 2.6.29 kernel, GCC 4.4.0
-    - Fedora* 14, 32-bit, 2.6.35 kernel, GCC 4.5.1
+    - Ubuntu* 16.04.1 LTS, 64-bit, kernel 4.4.0, GCC 5.4.0
+    - Ubuntu* 15.10, 64-bit, kernel 4.10.0-rc4, GCC 5.2.1
+    - CentOS* 7.2, 64-bit, kernel 4.8.4, GCC 4.8.5
+    - Fedora* 20, 64-bit, kernel 4.9.0-rc2, GCC 4.8.3
 
 To  compile  the program,  please  run  the  "make" command.
 
 After  successful compilation,  the "crctest"  executable  file should
 appear in the folder.
+
 
 4.  Program Execution
 
@@ -199,7 +169,7 @@ iterations of each CRC algorithm on a 1024 byte data block size.
 ftp://download.intel.com/technology/comms/perfnet/download/slicing-by-8.pdf
 
 [2] Fast CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction
-http://download.intel.com/design/intarch/papers/323102.pdf
+http://www.intel.com/content/dam/www/public/us/en/documents/white-papers/fast-crc-computation-generic-polynomials-pclmulqdq-paper.pdf
 
 [3] A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS
 http://www.ross.net/crc/download/crc_v3.txt
@@ -207,3 +177,14 @@ http://www.ross.net/crc/download/crc_v3.txt
 
 * Other names and brands may be claimed as the property of others.
 
+Legal Disclaimer
+================
+
+THIS SOFTWARE IS PROVIDED BY INTEL"AS IS". NO LICENSE, EXPRESS OR
+IMPLIED, BY ESTOPPEL OR OTHERWISE, TO ANY INTELLECTUAL PROPERTY RIGHTS
+ARE GRANTED THROUGH USE. EXCEPT AS PROVIDED IN INTEL'S TERMS AND
+CONDITIONS OF SALE, INTEL ASSUMES NO LIABILITY WHATSOEVER AND INTEL
+DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTY, RELATING TO SALE AND/OR
+USE OF INTEL PRODUCTS INCLUDING LIABILITY OR WARRANTIES RELATING TO
+FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABILITY, OR INFRINGEMENT
+OF ANY PATENT, COPYRIGHT OR OTHER INTELLECTUAL PROPERTY RIGHT.
