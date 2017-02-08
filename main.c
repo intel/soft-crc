@@ -277,7 +277,7 @@ static const struct enum_map enum_app_map[] = {
  *
  */
 
-static void get_cpu_clock(int cpuid);
+static void get_cpu_clock(const unsigned int cpuid);
 
 static uint8_t *
 generate_vector(const unsigned size);
@@ -330,7 +330,7 @@ select_test_groups(const struct enum_map *pmap, const unsigned int map_len,
  * @param cpuid CPU id that we are looking clock speed for
  *
  */
-static void get_cpu_clock(int cpuid)
+static void get_cpu_clock(const unsigned int cpuid)
 {
         char cb[256];
         FILE *fp = NULL;
