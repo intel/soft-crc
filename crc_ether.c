@@ -31,7 +31,6 @@
  */
 #include "crcr.h"
 #include "crc_ether.h"
-#include "crc32_refl_by8.h"
 
 /**
  * Local data
