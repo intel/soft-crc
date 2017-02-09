@@ -77,7 +77,7 @@ EtherCrc32CalculateCLMUL(const uint8_t *data,
         /* @todo
          * - init code for 'd' is needed
          * - this function will have to move to .h file and be inline
-         */ 
+         */
         static struct crcr_pclmulqdq_ctx d;
 
         return ~crcr32_calc_pclmulqdq(data, data_len, 0xffffffff, &d);

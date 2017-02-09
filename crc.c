@@ -327,6 +327,21 @@ get_poly_constant(const uint32_t poly, const uint32_t exp)
 }
 
 /**
+ * @brief Shift left of 1 by \a n number of bits
+ *
+ * @param n number of bits to shift 1 by
+ *
+ * @return 1 << n
+ * @retval 0 if \a n is bigger or equal to 64
+ */
+static inline uint64_t shift_one64(const int shift)
+{
+        if (shift >= 64)
+                return 0ULL;
+        return 1ULL << shift;
+}
+
+/**
  * @brief Initializes CRC computation context structure for given polynomial
  *
  * @param pctx plcmulqdq CRC computation context structure to be initialized
@@ -357,7 +372,7 @@ void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
         i = 32;
         do {
                 q = q << 1;
-                if (r & (1ULL << (32 + i))) {
+                if (r & shift_one64(32 + i)) {
                         r ^= (p << i);
                         q |= 1;
                 }
