@@ -619,7 +619,6 @@ conf_test(void)
          * against reference vector and function result will be verified against
          * reference value.
          */
-
         for (i = 0; i < DIM(fntable); i++) {
                 uint32_t lcrc = 0;
 

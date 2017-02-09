@@ -95,11 +95,8 @@ $(APPNAME): $(DEPFILE) main.o $(LIBNAME)
 $(DEPFILE): $(subst .o,.c,main.o $(AFILES))
 	$(CC) -MM $(CFLAGS) $^ > $@
 
-$(LIBNAME): $(AFILES) crc32_refl_by8.o
+$(LIBNAME): $(AFILES)
 	$(AR) crvs $@ $^
-
-crc32_refl_by8.o:
-	yasm -f x64 -f elf64 -D LINUX -X gnu -g dwarf2 crc32_refl_by8.asm
 
 .PHONY: help
 help:

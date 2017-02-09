@@ -25,6 +25,8 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+/* Common data types, macros and functions used across the CRC library */
+
 #ifndef CRC_TYPES_H_
 #define CRC_TYPES_H_
 
@@ -60,5 +62,37 @@ typedef uint8_t uint_fast8_t;
 #ifndef DIM
 #define DIM(x) (sizeof(x)/sizeof(x[0]))
 #endif
+
+/**
+ * Common functions
+ */
+
+/**
+ * @brief Swaps bytes in 16 bit word
+ *
+ * @param val 16 bit data value
+ *
+ * @return byte swapped value
+ */
+__forceinline uint16_t bswap2(const uint16_t val)
+{
+        return (uint16_t) ((val >> 8) | (val << 8));
+}
+
+/**
+ * @brief Swaps bytes in 32 bit word
+ * ABCD -> DCBA
+ *
+ * @param val 32 bit data value
+ *
+ * @return byte swapped value
+ */
+__forceinline uint32_t bswap4(const uint32_t val)
+{
+        return ((val >> 24) |             /**< A*/
+                ((val & 0xff0000) >> 8) | /**< B*/
+                ((val & 0xff00) << 8) |   /**< C*/
+                (val << 24));             /**< D*/
+}
 
 #endif /* CRC_TYPES_H_ */

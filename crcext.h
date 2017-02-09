@@ -33,6 +33,9 @@
 #ifndef __CRCEXT_H__
 #define __CRCEXT_H__
 
+#include <x86intrin.h>
+#include "types.h"
+
 /**
  * Flag indicating availability of PCLMULQDQ instruction
  * Only valid after running CRCInit() function.
@@ -40,8 +43,48 @@
 extern int pclmulqdq_available;
 
 /**
+ * Flag indicating availability of PCLMULQDQ instruction
+ * Only valid after running CRCInit() function.
+ */
+extern __m128i crc_xmm_be_le_swap128;
+extern const uint8_t crc_xmm_shift_tab[48];
+
+/**
+ * @brief Shifts right 128 bit register by specified number of bytes
+ *
+ * @param reg 128 bit value
+ * @param num number of bytes to shift right \a reg by (0-16)
+ *
+ * @return \a reg >> (\a num * 8)
+ */
+__forceinline
+__m128i xmm_shift_right(__m128i reg, const unsigned int num)
+{
+        const __m128i *p = (const __m128i *)(crc_xmm_shift_tab + 16 + num);
+
+        return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
+}
+
+/**
+ * @brief Shifts left 128 bit register by specified number of bytes
+ *
+ * @param reg 128 bit value
+ * @param num number of bytes to shift left \a reg by (0-16)
+ *
+ * @return \a reg << (\a num * 8)
+ */
+__forceinline
+__m128i xmm_shift_left(__m128i reg, const unsigned int num)
+{
+        const __m128i *p = (const __m128i *)(crc_xmm_shift_tab + 16 - num);
+
+        return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
+}
+
+/**
  * @brief Initializes CRC module.
  * @note It is mandatory to run it before using any of CRC API's.
  */
 extern void CRCInit(void);
+
 #endif /* __CRCEXT_H__ */

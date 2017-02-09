@@ -38,13 +38,6 @@
 #include "types.h"
 
 /**
- * Flag indicating availability of PCLMULQDQ instruction
- * Only valid after running CRCInit() function.
- */
-extern __m128i crc_xmm_be_le_swap128;
-extern const uint8_t crc_xmm_shift_tab[48];
-
-/**
  * PCLMULQDQ CRC computation context structure
  */
 struct crc_pclmulqdq_ctx {
@@ -70,34 +63,6 @@ struct crc_pclmulqdq_ctx {
 /**
  * Functions and prototypes
  */
-
-/**
- * @brief Swaps bytes in 16 bit word
- *
- * @param val 16 bit data value
- *
- * @return byte swapped value
- */
-__forceinline uint16_t bswap2(const uint16_t val)
-{
-        return (uint16_t) ((val >> 8) | (val << 8));
-}
-
-/**
- * @brief Swaps bytes in 32 bit word
- * ABCD -> DCBA
- *
- * @param val 32 bit data value
- *
- * @return byte swapped value
- */
-__forceinline uint32_t bswap4(const uint32_t val)
-{
-        return ((val >> 24) |             /**< A*/
-                ((val & 0xff0000) >> 8) | /**< B*/
-                ((val & 0xff00) << 8) |   /**< C*/
-                (val << 24));             /**< D*/
-}
 
 /**
  * @brief Initializes look-up-table (LUT) for given 8 bit polynomial
@@ -310,7 +275,6 @@ uint32_t crc32_calc_slice4(const uint8_t *data,
         return crc;
 }
 
-
 /**
  * @brief Initializes CRC computation context structure for given polynomial
  *
@@ -319,38 +283,6 @@ uint32_t crc32_calc_slice4(const uint8_t *data,
  */
 void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
                           const uint64_t poly);
-
-/**
- * @brief Shifts right 128 bit register by specified number of bytes
- *
- * @param reg 128 bit value
- * @param num number of bytes to shift right \a reg by (0-16)
- *
- * @return \a reg >> (\a num * 8)
- */
-__forceinline
-__m128i xmm_shift_right(__m128i reg, const unsigned int num)
-{
-        const __m128i *p = (const __m128i *)(crc_xmm_shift_tab + 16 + num);
-
-        return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
-}
-
-/**
- * @brief Shifts left 128 bit register by specified number of bytes
- *
- * @param reg 128 bit value
- * @param num number of bytes to shift left \a reg by (0-16)
- *
- * @return \a reg << (\a num * 8)
- */
-__forceinline
-__m128i xmm_shift_left(__m128i reg, unsigned int num)
-{
-        const __m128i *p = (const __m128i *)(crc_xmm_shift_tab + 16 - num);
-
-        return _mm_shuffle_epi8(reg, _mm_loadu_si128(p));
-}
 
 /**
  * @brief Performs one folding round

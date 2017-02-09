@@ -53,7 +53,7 @@ int pclmulqdq_available = 0;
 
 __m128i crc_xmm_be_le_swap128;
 
-const uint8_t crc_xmm_shift_tab[48] = {
+DECLARE_ALIGNED(const uint8_t crc_xmm_shift_tab[48], 16) = {
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -64,17 +64,14 @@ const uint8_t crc_xmm_shift_tab[48] = {
 
 /**
  * Common macros
- *
  */
 
 /**
  * Common use local data
- *
  */
 
 /**
  * Common use function prototypes
- *
  */
 static uint32_t
 get_poly_constant(const uint32_t poly, const uint32_t exp);
