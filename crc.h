@@ -26,7 +26,15 @@
 *******************************************************************************/
 
 /**
- * Header file for module with implementation of IuUP and FP CRCs
+ * Header file for module with CRC computation methods
+ *
+ * PCLMULQDQ implementation is based on work by:
+ *               Erdinc Ozturk
+ *               Vinodh Gopal
+ *               James Guilford
+ *
+ * "Fast CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction"
+ * URL: http://download.intel.com/design/intarch/papers/323102.pdf
  */
 
 #ifndef __CRC_H__
@@ -379,13 +387,7 @@ crc32_calc_pclmulqdq(const uint8_t *data,
         __m128i temp, fold, k, swap;
         uint32_t n;
 
-        if (unlikely(data == NULL))
-                return crc;
-
-        if (unlikely(data_len == 0))
-                return crc;
-
-        if (unlikely(params == NULL))
+        if (unlikely(data == NULL || data_len == 0 || params == NULL))
                 return crc;
 
 #ifdef __KERNEL__

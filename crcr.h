@@ -26,9 +26,9 @@
 *******************************************************************************/
 
 /**
- * Header file for module with implementation of reflected CRCs
+ * Header file for module with reflected CRC computation methods
  *
- * The implementation is based on work by:
+ * PCLMULQDQ implementation is based on work by:
  *               Erdinc Ozturk
  *               Vinodh Gopal
  *               James Guilford
@@ -44,53 +44,10 @@
 #include "crcext.h"
 #include "types.h"
 
-static DECLARE_ALIGNED(uint64_t crcr32_precomp[], 16) = {
-        /* precomputed constants */
-        /* rk1 */ 0x00000000ccaa009e,
-        /* rk2 */ 0x00000001751997d0,
-        /* rk3 */ 0x000000014a7fe880,
-        /* rk4 */ 0x00000001e88ef372,
-        /* rk5 */ 0x00000000ccaa009e,
-        /* rk6 */ 0x0000000163cd6124,
-        /* rk7 */ 0x00000001f7011640,
-        /* rk8 */ 0x00000001db710640,
-        /* rk9 */ 0x00000001d7cfc6ac,
-        /* rk10 */ 0x00000001ea89367e,
-        /* rk11 */ 0x000000018cb44e58,
-        /* rk12 */ 0x00000000df068dc2,
-        /* rk13 */ 0x00000000ae0b5394,
-        /* rk14 */ 0x00000001c7569e54,
-        /* rk15 */ 0x00000001c6e41596,
-        /* rk16 */ 0x0000000154442bd4,
-        /* rk17 */ 0x0000000174359406,
-        /* rk18 */ 0x000000003db1ecdc,
-        /* rk19 */ 0x000000015a546366,
-        /* rk20 */ 0x00000000f1da05aa
-};
-
-#define rk1 0
-#define rk2 1
-#define rk3 2
-#define rk4 3
-#define rk5 4
-#define rk6 5
-#define rk7 6
-#define rk8 7
-#define rk9 8
-#define rk10 9
-#define rk11 10
-#define rk12 11
-#define rk13 12
-#define rk14 13
-#define rk15 14
-#define rk16 15
-#define rk17 16
-#define rk18 17
-#define rk19 18
-#define rk20 19
-
 struct crcr_pclmulqdq_ctx {
-        int dummy_place_holder;
+        __m128i rk1_rk2;
+        __m128i rk5_rk6;
+        __m128i rk7_rk8;
 };
 
 /**
@@ -137,8 +94,8 @@ uint32_t crcr32_calc_lut(const uint8_t *data,
  * @param pctx plcmulqdq CRC computation context structure to be initialized
  * @param poly CRC polynomial
  */
-/* void crcr32_init_pclmulqdq(struct crcr_pclmulqdq_ctx *pctx, */
-/*                            const uint64_t poly); */
+void crcr32_init_pclmulqdq(struct crcr_pclmulqdq_ctx *pctx,
+                           const uint64_t poly);
 
 /**
  * @brief Performs one folding round
@@ -297,7 +254,7 @@ uint32_t crcr32_calc_pclmulqdq(const uint8_t *data,
                 fold = _mm_loadu_si128((__m128i *)data);
                 fold = _mm_xor_si128(fold, temp);
                 n = 16;
-                k = _mm_load_si128((__m128i *)&crcr32_precomp[rk1]);
+                k = params->rk1_rk2;
                 goto partial_bytes;
         }
 
@@ -308,14 +265,14 @@ uint32_t crcr32_calc_pclmulqdq(const uint8_t *data,
         /**
          * Apply CRC initial value
          */
-        fold = _mm_loadu_si128((__m128i *)data);
+        fold = _mm_loadu_si128((const __m128i *)data);
         fold = _mm_xor_si128(fold, temp);
 
         /**
          * Main folding loop
          * - the last 16 bytes is processed separately
          */
-        k = _mm_load_si128((__m128i *)&crcr32_precomp[rk1]);
+        k = params->rk1_rk2;
         for (n = 16; (n + 16) <= data_len; n += 16) {
                 temp = _mm_loadu_si128((__m128i *)&data[n]);
                 fold = crcr32_folding_round(temp, k, fold);
@@ -359,11 +316,11 @@ uint32_t crcr32_calc_pclmulqdq(const uint8_t *data,
          * Assumes: \a fold holds 128bit folded data
          */
  reduction_128_64:
-        k = _mm_load_si128((__m128i *)&crcr32_precomp[rk5]);
+        k = params->rk5_rk6;
         fold = crcr32_reduce_128_to_64(fold, k);
 
  barret_reduction:
-        k = _mm_load_si128((__m128i *)&crcr32_precomp[rk7]);
+        k = params->rk7_rk8;
         n = crcr32_reduce_64_to_32(fold, k);
 
 #ifdef __KERNEL__

@@ -27,20 +27,18 @@
 
 /**
  * Implementation of Ethernet CRCs
- *
  */
 #include "crcr.h"
 #include "crc_ether.h"
 
 /**
  * Local data
- *
  */
-static uint32_t ether_crc32_lut[256];
+uint32_t ether_crc32_lut[256];
+DECLARE_ALIGNED(struct crcr_pclmulqdq_ctx ether_crc32_clmul, 16);
 
 /**
  * Implementation
- *
  */
 
 /**
@@ -50,35 +48,17 @@ static uint32_t ether_crc32_lut[256];
 void EtherCrcInit(void)
 {
         crcr32_init_lut(ETHERNET_CRC32_POLYNOMIAL, ether_crc32_lut);
+
+        ether_crc32_clmul.rk1_rk2 =
+                _mm_setr_epi64(_m_from_int64(0x00000000ccaa009e) /* rk1 */,
+                               _m_from_int64(0x00000001751997d0) /* rk2 */);
+
+        ether_crc32_clmul.rk5_rk6 =
+                _mm_setr_epi64(_m_from_int64(0x00000000ccaa009e) /* rk5 */,
+                               _m_from_int64(0x0000000163cd6124) /* rk6 */);
+
+        ether_crc32_clmul.rk7_rk8 =
+                _mm_setr_epi64(_m_from_int64(0x00000001f7011640) /* rk7 */,
+                               _m_from_int64(0x00000001db710640) /* rk8 */);
 }
 
-/**
- * @brief Calculates Ethernet CRC32 using LUT method
- *
- * @param data pointer to data block to calculate CRC for
- * @param data_len size of data block
- *
- * @return New CRC value
- */
-uint32_t
-EtherCrc32CalculateLUT(const uint8_t *data,
-                        uint32_t data_len)
-{
-        return ~crcr32_calc_lut(data,
-                                 data_len,
-                                 0xffffffff,
-                                 ether_crc32_lut);
-}
-
-uint32_t
-EtherCrc32CalculateCLMUL(const uint8_t *data,
-                        uint32_t data_len)
-{
-        /* @todo
-         * - init code for 'd' is needed
-         * - this function will have to move to .h file and be inline
-         */
-        static struct crcr_pclmulqdq_ctx d;
-
-        return ~crcr32_calc_pclmulqdq(data, data_len, 0xffffffff, &d);
-}

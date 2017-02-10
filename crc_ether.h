@@ -33,10 +33,15 @@
 #ifndef __CRC_ETHER_H__
 #define __CRC_ETHER_H__
 
+#include "crcr.h"
+
 /**
  * CRC polynomials
  */
 #define ETHERNET_CRC32_POLYNOMIAL 0x04c11db7UL
+
+extern uint32_t ether_crc32_lut[256];
+extern struct crcr_pclmulqdq_ctx ether_crc32_clmul;
 
 /**
  * @brief Initializes data structures for Ethernet crc32 calculations.
@@ -52,7 +57,12 @@ extern void EtherCrcInit(void);
  *
  * @return New CRC value
  */
-extern uint32_t EtherCrc32CalculateLUT(const uint8_t *data, uint32_t data_len);
+__forceinline
+uint32_t EtherCrc32CalculateLUT(const uint8_t *data, uint32_t data_len)
+{
+        return ~crcr32_calc_lut(data, data_len,
+                                0xffffffff, ether_crc32_lut);
+}
 
 /**
  * @brief Calculates Ethernet CRC32 using PCLMULQDQ method.
@@ -62,7 +72,11 @@ extern uint32_t EtherCrc32CalculateLUT(const uint8_t *data, uint32_t data_len);
  *
  * @return New CRC value
  */
-extern uint32_t EtherCrc32CalculateCLMUL(const uint8_t *data,
-        uint32_t data_len);
+__forceinline
+uint32_t EtherCrc32CalculateCLMUL(const uint8_t *data, uint32_t data_len)
+{
+        return ~crcr32_calc_pclmulqdq(data, data_len,
+                                      0xffffffff, &ether_crc32_clmul);
+}
 
 #endif /* __CRCR_ETHER_H__ */

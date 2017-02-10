@@ -33,25 +33,20 @@
 
 /**
  * Global data
- *
  */
 
 /**
  * Common macros
- *
  */
 
 /**
  * Common use local data
- *
  */
 
 /**
  * Common use function prototypes
- *
  */
-static uint32_t
-reflect_32bits(const uint32_t x);
+static uint32_t reflect_32bits(const uint32_t x);
 
 /**
  * ========================
@@ -80,12 +75,6 @@ reflect_32bits(const uint32_t val)
         return res;
 }
 
-/**
- * @brief Initializes reflected look-up-table (LUT) for given 32 bit polynomial
- *
- * @param poly CRC polynomial
- * @param rlut pointer to reflected 256 x 32bits look-up-table to be initialized
- */
 void
 crcr32_init_lut(const uint32_t poly, uint32_t *rlut)
 {
@@ -110,4 +99,13 @@ crcr32_init_lut(const uint32_t poly, uint32_t *rlut)
 
                 rlut[i] = reflect_32bits(crc);
         }
+}
+
+void
+crcr32_init_pclmulqdq(struct crcr_pclmulqdq_ctx *pctx,
+                      const uint64_t poly)
+{
+        /* @todo */
+        (void) pctx;
+        (void) poly;
 }
