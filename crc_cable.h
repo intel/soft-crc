@@ -26,7 +26,7 @@
 *******************************************************************************/
 
 /**
- * Header file for module with implementation of cable X.25 CRC16
+ * Implementation of cable X.25 CRC16
  *
  */
 
@@ -36,7 +36,10 @@
 /**
  * CRC polynomials
  */
-#define CRC16_X_25_POLYNOMIAL 0x1021U
+#define CRC16_X_25_POLYNOMIAL 0x1021UL
+
+extern uint32_t cable_crc16x25_lut[256];
+extern struct crcr_pclmulqdq_ctx cable_crc16x25_clmul;
 
 /**
  * @brief Initializes data structures for cable X.25 crc16 calculations.
@@ -52,6 +55,26 @@ extern void CableCrcInit(void);
  *
  * @return New CRC value
  */
-extern uint16_t CableCrc16CalculateLUT(const uint8_t *data, uint32_t data_len);
+__forceinline
+uint16_t CableCrc16CalculateLUT(const uint8_t *data, uint32_t data_len)
+{
+        return (uint16_t)(~crcr32_calc_lut(data, data_len, 0xffff,
+                                           cable_crc16x25_lut));
+}
+
+/**
+ * @brief Calculates cable X.25 CRC16 using CLMUL method.
+ *
+ * @param data pointer to data block to calculate CRC for
+ * @param data_len size of data block
+ *
+ * @return New CRC value
+ */
+__forceinline
+uint16_t CableCrc16CalculateCLMUL(const uint8_t *data, uint32_t data_len)
+{
+        return (uint16_t)(~crcr32_calc_pclmulqdq(data, data_len, 0xffff,
+                                                 &cable_crc16x25_clmul));
+}
 
 #endif /* __CRC_CABLE_H__ */

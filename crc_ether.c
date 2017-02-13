@@ -48,6 +48,6 @@ DECLARE_ALIGNED(struct crcr_pclmulqdq_ctx ether_crc32_clmul, 16);
 void EtherCrcInit(void)
 {
         crcr32_init_lut(ETHERNET_CRC32_POLYNOMIAL, ether_crc32_lut);
-        crcr32_init_pclmulqdq(&ether_crc32_clmul, ETHERNET_CRC32_POLYNOMIAL);
+        crcr32_init_pclmulqdq(ETHERNET_CRC32_POLYNOMIAL, &ether_crc32_clmul);
 }
 

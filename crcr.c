@@ -109,8 +109,8 @@ crcr32_init_lut(const uint32_t poly, uint32_t *rlut)
 }
 
 void
-crcr32_init_pclmulqdq(struct crcr_pclmulqdq_ctx *pctx,
-                      const uint64_t poly)
+crcr32_init_pclmulqdq(const uint64_t poly,
+                      struct crcr_pclmulqdq_ctx *pctx)
 {
         uint64_t k1, k2, k5, k6;
         uint64_t p = 0, q = 0;

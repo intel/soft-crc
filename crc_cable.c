@@ -26,22 +26,13 @@
 *******************************************************************************/
 
 /**
- * Implementation of cable X.25 CRC16
- *
+ * Cable X.25 CRC16
  */
 #include "crcr.h"
 #include "crc_cable.h"
 
-/**
- * Local data
- *
- */
-static uint32_t cable_crc16_lut[256];
-
-/**
- * Implementation
- *
- */
+uint32_t cable_crc16x25_lut[256];
+DECLARE_ALIGNED(struct crcr_pclmulqdq_ctx cable_crc16x25_clmul, 16);
 
 /**
  * @brief Initializes data structures for X.25 crc16 calculations.
@@ -49,23 +40,8 @@ static uint32_t cable_crc16_lut[256];
  */
 void CableCrcInit(void)
 {
-        crcr32_init_lut(CRC16_X_25_POLYNOMIAL << 16, cable_crc16_lut);
+        crcr32_init_lut(CRC16_X_25_POLYNOMIAL << 16, cable_crc16x25_lut);
+        crcr32_init_pclmulqdq(CRC16_X_25_POLYNOMIAL << 16,
+                              &cable_crc16x25_clmul);
 }
 
-/**
- * @brief Calculates cable X.25 CRC16 using LUT method
- *
- * @param data pointer to data block to calculate CRC for
- * @param data_len size of data block
- *
- * @return New CRC value
- */
-uint16_t
-CableCrc16CalculateLUT(const uint8_t *data,
-                        uint32_t data_len)
-{
-        return (uint16_t)(~crcr32_calc_lut(data,
-					    data_len,
-					    0xffff,
-					    cable_crc16_lut));
-}

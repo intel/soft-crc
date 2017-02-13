@@ -91,11 +91,11 @@ uint32_t crcr32_calc_lut(const uint8_t *data,
  * @brief Initializes reflected CRC computation context structure for
  *        given polynomial
  *
- * @param pctx plcmulqdq CRC computation context structure to be initialized
  * @param poly CRC polynomial
+ * @param pctx plcmulqdq CRC computation context structure to be initialized
  */
-void crcr32_init_pclmulqdq(struct crcr_pclmulqdq_ctx *pctx,
-                           const uint64_t poly);
+void crcr32_init_pclmulqdq(const uint64_t poly,
+                           struct crcr_pclmulqdq_ctx *pctx);
 
 /**
  * @brief Performs one folding round
