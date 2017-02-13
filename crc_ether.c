@@ -48,17 +48,6 @@ DECLARE_ALIGNED(struct crcr_pclmulqdq_ctx ether_crc32_clmul, 16);
 void EtherCrcInit(void)
 {
         crcr32_init_lut(ETHERNET_CRC32_POLYNOMIAL, ether_crc32_lut);
-
-        ether_crc32_clmul.rk1_rk2 =
-                _mm_setr_epi64(_m_from_int64(0x00000000ccaa009e) /* rk1 */,
-                               _m_from_int64(0x00000001751997d0) /* rk2 */);
-
-        ether_crc32_clmul.rk5_rk6 =
-                _mm_setr_epi64(_m_from_int64(0x00000000ccaa009e) /* rk5 */,
-                               _m_from_int64(0x0000000163cd6124) /* rk6 */);
-
-        ether_crc32_clmul.rk7_rk8 =
-                _mm_setr_epi64(_m_from_int64(0x00000001f7011640) /* rk7 */,
-                               _m_from_int64(0x00000001db710640) /* rk8 */);
+        crcr32_init_pclmulqdq(&ether_crc32_clmul, ETHERNET_CRC32_POLYNOMIAL);
 }
 

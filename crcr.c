@@ -29,6 +29,8 @@
  * Implementation of reflected CRCs
  *
  */
+#include <x86intrin.h>
+#include "crcext.h"
 #include "crcr.h"
 
 /**
@@ -46,7 +48,6 @@
 /**
  * Common use function prototypes
  */
-static uint32_t reflect_32bits(const uint32_t x);
 
 /**
  * ========================
@@ -57,22 +58,28 @@ static uint32_t reflect_32bits(const uint32_t x);
  */
 
 /**
- * @brief Reflect the bits about the middle
+ * @brief Reflects selected group of bits in \a v
  *
- * @param x value to be reflected
+ * @param v value to be reflected
+ * @param n size of the bit field to be reflected
  *
- * @return reflected value
+ * @return bit reflected value
  */
-static uint32_t
-reflect_32bits(const uint32_t val)
+static uint64_t
+reflect(uint64_t v, const uint32_t n)
 {
-        uint32_t i, res = 0;
+        uint32_t i;
+        uint64_t r = 0;
 
-        for (i = 0; i < 32; i++)
-                if ((val & (1 << i)) != 0)
-                        res |= (uint32_t)(1 << (31 - i));
+        for (i = 0; i < n; i++) {
+                if (i != 0) {
+                        r <<= 1;
+                        v >>= 1;
+                }
+                r |= (v & 1);
+        }
 
-        return res;
+        return r;
 }
 
 void
@@ -88,7 +95,7 @@ crcr32_init_lut(const uint32_t poly, uint32_t *rlut)
                  * i = reflect_8bits(i);
                  * crc = (i << 24);
                  */
-                uint_fast32_t crc = reflect_32bits(i);
+                uint_fast32_t crc = (uint32_t) reflect(i, 32);
 
                 for (j = 0; j < 8; j++) {
                         if (crc & 0x80000000L)
@@ -97,7 +104,7 @@ crcr32_init_lut(const uint32_t poly, uint32_t *rlut)
                                 crc <<= 1;
                 }
 
-                rlut[i] = reflect_32bits(crc);
+                rlut[i] = (uint32_t) reflect(crc, 32);
         }
 }
 
@@ -105,7 +112,32 @@ void
 crcr32_init_pclmulqdq(struct crcr_pclmulqdq_ctx *pctx,
                       const uint64_t poly)
 {
-        /* @todo */
-        (void) pctx;
-        (void) poly;
+        uint64_t k1, k2, k5, k6;
+        uint64_t p = 0, q = 0;
+
+        if (pctx == NULL)
+                return;
+
+        k1 = get_poly_constant(poly, 128 - 32);
+        k2 = get_poly_constant(poly, 128 + 32);
+        k5 = get_poly_constant(poly, 96);
+        k6 = get_poly_constant(poly, 64);
+
+        div_poly(poly, &q, NULL);
+        q = q & 0xffffffff;                      /**< quotient X^64 / P(X) */
+        p = poly | 0x100000000ULL;               /**< P(X) */
+
+        k1 = reflect(k1 << 32, 64) << 1;
+        k2 = reflect(k2 << 32, 64) << 1;
+        k5 = reflect(k5 << 32, 64) << 1;
+        k6 = reflect(k6 << 32, 64) << 1;
+        q = reflect(q, 33);
+        p = reflect(p, 33);
+
+        /**
+         * Save the params in context structure
+         */
+        pctx->rk1_rk2 = _mm_setr_epi64(_m_from_int64(k1), _m_from_int64(k2));
+        pctx->rk5_rk6 = _mm_setr_epi64(_m_from_int64(k5), _m_from_int64(k6));
+        pctx->rk7_rk8 = _mm_setr_epi64(_m_from_int64(q), _m_from_int64(p));
 }

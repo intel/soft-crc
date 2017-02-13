@@ -26,13 +26,13 @@
 *******************************************************************************/
 
 /**
- * Implementation of IuUP and FP CRCs
- *
+ * Implementation of CRC computation methods
  */
 #include <cpuid.h>
 
 #include "crc.h"
 #include "crcr.h"
+#include "crcext.h"
 #include "crc_rnc.h"
 #include "crc_wimax.h"
 #include "crc_sctp.h"
@@ -303,45 +303,6 @@ void crc32_init_slice4(const uint32_t poly,
  */
 
 /**
- * @brief Computes constant for CLMUL algorithm
- *
- * Result is: X^exp mod poly
- *
- * @param poly polynomial
- * @param exp exponent
- *
- * @return constant value
- */
-static uint32_t
-get_poly_constant(const uint32_t poly, const uint32_t exp)
-{
-        uint32_t i, res = poly;
-
-        for (i = 32; i < exp; i++)
-                if (res & 0x80000000)
-                        res = (res << 1) ^ poly;
-                else
-                        res = (res << 1);
-
-        return res;
-}
-
-/**
- * @brief Shift left of 1 by \a n number of bits
- *
- * @param n number of bits to shift 1 by
- *
- * @return 1 << n
- * @retval 0 if \a n is bigger or equal to 64
- */
-static inline uint64_t shift_one64(const int shift)
-{
-        if (shift >= 64)
-                return 0ULL;
-        return 1ULL << shift;
-}
-
-/**
  * @brief Initializes CRC computation context structure for given polynomial
  *
  * @param pctx plcmulqdq CRC computation context structure to be initialized
@@ -351,8 +312,7 @@ void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
                           const uint64_t poly)
 {
         uint64_t k1, k2, k3;
-        uint64_t p = 0, q = 0, r = 0;
-        int i;
+        uint64_t q = 0;
 
         if (pctx == NULL)
                 return;
@@ -361,33 +321,15 @@ void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
         k2 = get_poly_constant(poly, 192);       /**< reminder X^192 / P(X) */
         k3 = get_poly_constant(poly, 64);        /**< reminder X^64 / P(X) */
 
-        /**
-         * Calculate quotient and reminder of: X^64 / P(X)
-         */
-        p = poly | 0x100000000ULL;
-
-        r = p;
-        r = r << 32;
-
-        i = 32;
-        do {
-                q = q << 1;
-                if (r & shift_one64(32 + i)) {
-                        r ^= (p << i);
-                        q |= 1;
-                }
-                i--;
-        } while (i >= 0);
-
+        div_poly(poly, &q, NULL);
         q = q & 0xffffffff;                      /**< quotient X^64 / P(X) */
-        p = p & 0xffffffff;                      /**< polynomial P(X) */
 
         /**
          * Save the params in context structure
          */
         pctx->k1_k2 = _mm_setr_epi64(_m_from_int64(k1), _m_from_int64(k2));
         pctx->k3_q  = _mm_setr_epi64(_m_from_int64(k3), _m_from_int64(q));
-        pctx->p_res = _mm_setr_epi64(_m_from_int64(p),  _m_from_int64(0ULL));
+        pctx->p_res = _mm_setr_epi64(_m_from_int64(poly),  _m_from_int64(0ULL));
 }
 
 /**
