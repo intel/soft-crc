@@ -35,7 +35,14 @@
  * Local data
  */
 uint32_t ether_crc32_lut[256];
-DECLARE_ALIGNED(struct crcr_pclmulqdq_ctx ether_crc32_clmul, 16);
+struct DECLARE_ALIGNED(crcr_pclmulqdq_ctx ether_crc32_clmul, 16) = {
+        0xccaa009e,     /**< rk1 */
+        0x1751997d0,    /**< rk2 */
+        0xccaa009e,     /**< rk5 */
+        0x163cd6124,    /**< rk6 */
+        0x1f7011640,    /**< rk7 */
+        0x1db710641     /**< rk8 */
+};
 
 /**
  * Implementation
@@ -48,6 +55,5 @@ DECLARE_ALIGNED(struct crcr_pclmulqdq_ctx ether_crc32_clmul, 16);
 void EtherCrcInit(void)
 {
         crcr32_init_lut(ETHERNET_CRC32_POLYNOMIAL, ether_crc32_lut);
-        crcr32_init_pclmulqdq(ETHERNET_CRC32_POLYNOMIAL, &ether_crc32_clmul);
 }
 

@@ -60,7 +60,14 @@ static uint32_t sctp_crc32c_slice2[256];
 static uint32_t sctp_crc32c_slice3[256];
 static uint32_t sctp_crc32c_slice4[256];
 
-static struct crc_pclmulqdq_ctx sctp_crc32c_pclmulqdq;
+static DECLARE_ALIGNED(struct crc_pclmulqdq_ctx sctp_crc32c_pclmulqdq, 16) = {
+        0x18571d18,     /**< k1 */
+        0x6503ea99,     /**< k2 */
+        0x3aab4576,     /**< k3 */
+        0x1f91caf6,     /**< q */
+        0x1edc6f41,     /**< p */
+        0ULL            /**< res */
+};
 
 /**
  * @brief Initializes data structures for SCTP crc32c calculations.
@@ -72,8 +79,6 @@ void SCTPCrc32cInit(void)
 
         crc32_init_slice4(SCTP_CRC32C_POLYNOMIAL, sctp_crc32c_slice1,
                 sctp_crc32c_slice2, sctp_crc32c_slice3, sctp_crc32c_slice4);
-
-        crc32_init_pclmulqdq(&sctp_crc32c_pclmulqdq, SCTP_CRC32C_POLYNOMIAL);
 
         if (pclmulqdq_available)
                 SCTPDataCrc32Calculate = SCTPCrc32cCalculateCLMUL;

@@ -73,8 +73,6 @@ DECLARE_ALIGNED(const uint8_t crc_xmm_shift_tab[48], 16) = {
 /**
  * Common use function prototypes
  */
-static uint32_t
-get_poly_constant(const uint32_t poly, const uint32_t exp);
 
 /**
  * ========================
@@ -292,44 +290,6 @@ void crc32_init_slice4(const uint32_t poly,
                                 crc <<= 1;
                 slice4[i] = bswap4(crc);
         }
-}
-
-/**
- * ===============================
- *
- * PCLMULQDQ METHOD (32 bit CRC)
- *
- * ===============================
- */
-
-/**
- * @brief Initializes CRC computation context structure for given polynomial
- *
- * @param pctx plcmulqdq CRC computation context structure to be initialized
- * @param poly CRC polynomial
- */
-void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
-                          const uint64_t poly)
-{
-        uint64_t k1, k2, k3;
-        uint64_t q = 0;
-
-        if (pctx == NULL)
-                return;
-
-        k1 = get_poly_constant(poly, 128);       /**< reminder X^128 / P(X) */
-        k2 = get_poly_constant(poly, 192);       /**< reminder X^192 / P(X) */
-        k3 = get_poly_constant(poly, 64);        /**< reminder X^64 / P(X) */
-
-        div_poly(poly, &q, NULL);
-        q = q & 0xffffffff;                      /**< quotient X^64 / P(X) */
-
-        /**
-         * Save the params in context structure
-         */
-        pctx->k1_k2 = _mm_setr_epi64(_m_from_int64(k1), _m_from_int64(k2));
-        pctx->k3_q  = _mm_setr_epi64(_m_from_int64(k3), _m_from_int64(q));
-        pctx->p_res = _mm_setr_epi64(_m_from_int64(poly),  _m_from_int64(0ULL));
 }
 
 /**

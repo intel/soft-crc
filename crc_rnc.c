@@ -33,7 +33,6 @@
 #include "crc.h"
 #include "crc_rnc.h"
 
-
 /**
  * Global data
  *
@@ -69,28 +68,56 @@ static uint16_t fp_hdr_crc11_lut[256];                  /**< LUT */
 static uint16_t fp_data_crc16_lut[256];                 /**< LUT */
 static uint16_t fp_data_crc16_slice1[256];              /**< slice-by-2 */
 static uint16_t fp_data_crc16_slice2[256];              /**< slice-by-2 */
-static struct crc_pclmulqdq_ctx fp_crc16_pclmulqdq;     /**< CLMUL */
+static DECLARE_ALIGNED(struct crc_pclmulqdq_ctx fp_crc16_pclmulqdq, 16) = {
+        0xff830000,     /**< k1 */
+        0xf9130000,     /**< k2 */
+        0x807b0000,     /**< k3 */
+        0xfffbffe7,     /**< q */
+        0x80050000,     /**< p */
+        0ULL            /**< res */
+};
 
 static uint8_t iuup_hdr_crc6_lut[256];                  /**< LUT */
 
 static uint16_t iuup_data_crc10_lut[256];               /**< LUT */
 static uint16_t iuup_data_crc10_slice1[256];            /**< slice-by-2 */
 static uint16_t iuup_data_crc10_slice2[256];            /**< slice-by-2 */
-static struct crc_pclmulqdq_ctx iuup_crc10_pclmulqdq;   /**< CLMUL */
+static DECLARE_ALIGNED(struct crc_pclmulqdq_ctx iuup_crc10_pclmulqdq, 16) = {
+        0xfb000000,     /**< k1 */
+        0x92c00000,     /**< k2 */
+        0xb2400000,     /**< k3 */
+        0xf083a337,     /**< q */
+        0x8cc00000,     /**< p */
+        0ULL            /**< res */
+};
 
 static uint32_t lte_crc24a_lut[256];                    /**< LUT */
 static uint32_t lte_crc24a_slice1[256];                 /**< slice-by-4 */
 static uint32_t lte_crc24a_slice2[256];                 /**< slice-by-4 */
 static uint32_t lte_crc24a_slice3[256];                 /**< slice-by-4 */
 static uint32_t lte_crc24a_slice4[256];                 /**< slice-by-4 */
-static struct crc_pclmulqdq_ctx lte_crc24a_pclmulqdq;   /**< CLMUL */
+static DECLARE_ALIGNED(struct crc_pclmulqdq_ctx lte_crc24a_pclmulqdq, 16) = {
+        0x64e4d700,     /**< k1 */
+        0x2c8c9d00,     /**< k2 */
+        0xd9fe8c00,     /**< k3 */
+        0xf845fe24,     /**< q */
+        0x864cfb00,     /**< p */
+        0ULL            /**< res */
+};
 
 static uint32_t lte_crc24b_lut[256];                    /**< LUT */
 static uint32_t lte_crc24b_slice1[256];                 /**< slice-by-4 */
 static uint32_t lte_crc24b_slice2[256];                 /**< slice-by-4 */
 static uint32_t lte_crc24b_slice3[256];                 /**< slice-by-4 */
 static uint32_t lte_crc24b_slice4[256];                 /**< slice-by-4 */
-static struct crc_pclmulqdq_ctx lte_crc24b_pclmulqdq;   /**< CLMUL */
+static DECLARE_ALIGNED(struct crc_pclmulqdq_ctx lte_crc24b_pclmulqdq, 16) = {
+        0x80140500,     /**< k1 */
+        0x42000100,     /**< k2 */
+        0x90042100,     /**< k3 */
+        0xffff83ff,     /**< q */
+        0x80006300,     /**< p */
+        0ULL            /**< res */
+};
 
 /**
  * ===================================================================
@@ -172,9 +199,6 @@ void FPDataCrc16Init(void)
 
         crc16_init_slice2(FP_DATA_CRC16_POLYNOMIAL, fp_data_crc16_slice1,
                 fp_data_crc16_slice2);
-
-        crc32_init_pclmulqdq(&fp_crc16_pclmulqdq,
-                FP_DATA_CRC16_POLYNOMIAL << 16);
 
         if (pclmulqdq_available)
                 FPDataCrc16Calculate = FPDataCrc16CalculateCLMUL;
@@ -274,9 +298,6 @@ void IUUPDataCrc10Init(void)
         crc16_init_slice2(IUUP_DATA_CRC10_POLYNOMIAL << 6,
                 iuup_data_crc10_slice1, iuup_data_crc10_slice2);
 
-        crc32_init_pclmulqdq(&iuup_crc10_pclmulqdq,
-                IUUP_DATA_CRC10_POLYNOMIAL << 22);
-
         if (pclmulqdq_available) {
                 /**
                  * PCLMULQDQ is available we can init some of the constants
@@ -350,14 +371,10 @@ void LTECrcInit(void)
         crc32_init_slice4(LTE_CRC24A_POLYNOMIAL << 8, lte_crc24a_slice1,
                 lte_crc24a_slice2, lte_crc24a_slice3, lte_crc24a_slice4);
 
-        crc32_init_pclmulqdq(&lte_crc24a_pclmulqdq, LTE_CRC24A_POLYNOMIAL << 8);
-
         crc32_init_lut(LTE_CRC24B_POLYNOMIAL << 8, lte_crc24b_lut);
 
         crc32_init_slice4(LTE_CRC24B_POLYNOMIAL << 8, lte_crc24b_slice1,
                 lte_crc24b_slice2, lte_crc24b_slice3, lte_crc24b_slice4);
-
-        crc32_init_pclmulqdq(&lte_crc24b_pclmulqdq, LTE_CRC24B_POLYNOMIAL << 8);
 }
 
 /**

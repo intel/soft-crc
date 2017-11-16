@@ -37,7 +37,14 @@
  *
  */
 static uint32_t wimax_crc32_lut[256];
-static struct crc_pclmulqdq_ctx wimax_crc32_pclmulqdq;
+static DECLARE_ALIGNED(struct crc_pclmulqdq_ctx wimax_crc32_pclmulqdq, 16) = {
+        0xe8a45605,     /**< k1 */
+        0xc5b9cd4c,     /**< k2 */
+        0x490d678d,     /**< k3 */
+        0x4d101df,      /**< q */
+        0x4c11db7,      /**< p */
+        0ULL            /**< res */
+};
 
 static uint8_t wimax_hcs_lut[256];
 
@@ -53,9 +60,6 @@ static uint8_t wimax_hcs_lut[256];
 void WiMAXCrcInit(void)
 {
         crc32_init_lut(WIMAX_OFDMA_CRC32_POLYNOMIAL, wimax_crc32_lut);
-
-        crc32_init_pclmulqdq(&wimax_crc32_pclmulqdq,
-                WIMAX_OFDMA_CRC32_POLYNOMIAL);
 
         crc8_init_lut(WIMAX_OFDMA_HCS_POLYNOMIAL, wimax_hcs_lut);
 }

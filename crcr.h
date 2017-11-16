@@ -45,9 +45,12 @@
 #include "types.h"
 
 struct crcr_pclmulqdq_ctx {
-        __m128i rk1_rk2;
-        __m128i rk5_rk6;
-        __m128i rk7_rk8;
+        uint64_t rk1;
+        uint64_t rk2;
+        uint64_t rk5;
+        uint64_t rk6;
+        uint64_t rk7;
+        uint64_t rk8;
 };
 
 /**
@@ -86,16 +89,6 @@ uint32_t crcr32_calc_lut(const uint8_t *data,
 
         return crc;
 }
-
-/**
- * @brief Initializes reflected CRC computation context structure for
- *        given polynomial
- *
- * @param poly CRC polynomial
- * @param pctx plcmulqdq CRC computation context structure to be initialized
- */
-void crcr32_init_pclmulqdq(const uint64_t poly,
-                           struct crcr_pclmulqdq_ctx *pctx);
 
 /**
  * @brief Performs one folding round
@@ -254,7 +247,7 @@ uint32_t crcr32_calc_pclmulqdq(const uint8_t *data,
                 fold = _mm_loadu_si128((__m128i *)data);
                 fold = _mm_xor_si128(fold, temp);
                 n = 16;
-                k = params->rk1_rk2;
+                k = _mm_load_si128((__m128i *)(&params->rk1));
                 goto partial_bytes;
         }
 
@@ -272,7 +265,7 @@ uint32_t crcr32_calc_pclmulqdq(const uint8_t *data,
          * Main folding loop
          * - the last 16 bytes is processed separately
          */
-        k = params->rk1_rk2;
+        k = _mm_load_si128((__m128i *)(&params->rk1));
         for (n = 16; (n + 16) <= data_len; n += 16) {
                 temp = _mm_loadu_si128((__m128i *)&data[n]);
                 fold = crcr32_folding_round(temp, k, fold);
@@ -316,11 +309,11 @@ uint32_t crcr32_calc_pclmulqdq(const uint8_t *data,
          * Assumes: \a fold holds 128bit folded data
          */
  reduction_128_64:
-        k = params->rk5_rk6;
+        k = _mm_load_si128((__m128i *)(&params->rk5));
         fold = crcr32_reduce_128_to_64(fold, k);
 
  barret_reduction:
-        k = params->rk7_rk8;
+        k = _mm_load_si128((__m128i *)(&params->rk7));
         n = crcr32_reduce_64_to_32(fold, k);
 
 #ifdef __KERNEL__

@@ -53,19 +53,22 @@ struct crc_pclmulqdq_ctx {
          * K1 = reminder X^128 / P(X) : 0-63
          * K2 = reminder X^192 / P(X) : 64-127
          */
-        __m128i k1_k2;
+        uint64_t k1;
+        uint64_t k2;
 
         /**
          * K3 = reminder X^64 / P(X) : 0-63
          * q  = quotient X^64 / P(X) : 64-127
          */
-        __m128i k3_q;
+        uint64_t k3;
+        uint64_t q;
 
         /**
          * p   = polynomial / P(X) : 0-63
          * res = reserved : 64-127
          */
-        __m128i p_res;
+        uint64_t p;
+        uint64_t res;
 };
 
 /**
@@ -284,15 +287,6 @@ uint32_t crc32_calc_slice4(const uint8_t *data,
 }
 
 /**
- * @brief Initializes CRC computation context structure for given polynomial
- *
- * @param pctx plcmulqdq CRC computation context structure to be initialized
- * @param poly CRC polynomial
- */
-void crc32_init_pclmulqdq(struct crc_pclmulqdq_ctx *pctx,
-                          const uint64_t poly);
-
-/**
  * @brief Performs one folding round
  *
  * Logically function operates as follows:
@@ -477,7 +471,7 @@ crc32_calc_pclmulqdq(const uint8_t *data,
                 /**
                  * Do the initial folding round on 2 first 16 byte chunks
                  */
-                k = params->k1_k2;
+                k = _mm_load_si128((__m128i *)(&params->k1));
                 fold = crc32_folding_round(next_data, k, fold);
 
                 if (likely(data_len > 32)) {
@@ -525,13 +519,14 @@ crc32_calc_pclmulqdq(const uint8_t *data,
         /**
          * REDUCTION 128 -> 64
          */
-        k = params->k3_q;
+        k = _mm_load_si128((__m128i *)(&params->k3));
         fold = crc32_reduce_128_to_64(fold, k);
 
         /**
          * REDUCTION 64 -> 32
          */
-        n = crc32_reduce_64_to_32(fold, k, params->p_res);
+        n = crc32_reduce_64_to_32(fold, k,
+                                  _mm_load_si128((__m128i *)(&params->p)));
 
 #ifdef __KERNEL__
         /**

@@ -107,37 +107,3 @@ crcr32_init_lut(const uint32_t poly, uint32_t *rlut)
                 rlut[i] = (uint32_t) reflect(crc, 32);
         }
 }
-
-void
-crcr32_init_pclmulqdq(const uint64_t poly,
-                      struct crcr_pclmulqdq_ctx *pctx)
-{
-        uint64_t k1, k2, k5, k6;
-        uint64_t p = 0, q = 0;
-
-        if (pctx == NULL)
-                return;
-
-        k1 = get_poly_constant(poly, 128 - 32);
-        k2 = get_poly_constant(poly, 128 + 32);
-        k5 = get_poly_constant(poly, 96);
-        k6 = get_poly_constant(poly, 64);
-
-        div_poly(poly, &q, NULL);
-        q = q & 0xffffffff;                      /**< quotient X^64 / P(X) */
-        p = poly | 0x100000000ULL;               /**< P(X) */
-
-        k1 = reflect(k1 << 32, 64) << 1;
-        k2 = reflect(k2 << 32, 64) << 1;
-        k5 = reflect(k5 << 32, 64) << 1;
-        k6 = reflect(k6 << 32, 64) << 1;
-        q = reflect(q, 33);
-        p = reflect(p, 33);
-
-        /**
-         * Save the params in context structure
-         */
-        pctx->rk1_rk2 = _mm_setr_epi64(_m_from_int64(k1), _m_from_int64(k2));
-        pctx->rk5_rk6 = _mm_setr_epi64(_m_from_int64(k5), _m_from_int64(k6));
-        pctx->rk7_rk8 = _mm_setr_epi64(_m_from_int64(q), _m_from_int64(p));
-}

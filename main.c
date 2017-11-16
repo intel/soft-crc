@@ -863,7 +863,7 @@ select_test_groups(const struct enum_map *pmap, const unsigned int map_len,
                        "Exiting program ...\n", __FILE__, __LINE__);
                 exit(EXIT_FAILURE);
         }
-        memset (user_tags_cpy, 0, strlen(user_tags) + 1);
+        memset(user_tags_cpy, 0, strlen(user_tags) + 1);
         strncpy(user_tags_cpy, user_tags, strlen(user_tags));
 
         /**
