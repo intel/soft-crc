@@ -32,11 +32,11 @@ APPNAME ?= crctest
 LIBNAME ?= libcrc.a
 DEPFILE ?= depend
 
-CFLAGS = -Wall -Winline
+CFLAGS = -Wall -Winline -Wformat -Wformat-security -fPIC
 CFLAGS_GCC = -msse4.2 -mpclmul -falign-loops=32
 CFLAGS_ICC64 = -axSSE4.2 -xHost
 CFLAGS_ICC32 = -axSSE4.2
-LDFLAGS = -L. -lcrc
+LDFLAGS = -fPIE -L. -lcrc -z noexecstack -z relro -z now -pie
 
 ifeq ($(CC),icc)
 #
@@ -63,6 +63,7 @@ else
 # SSE enabled code was still better than vectorized by compiler. Change to -O3 and check :)
 # It doesnot affect CRC code which doesnot get vectorized anyway.
 CFLAGS += -O2 -finline-functions -funswitch-loops -fpredictive-commoning -fgcse-after-reload -fipa-cp-clone
+CFLAGS += -fstack-protector -D_FORTIFY_SOURCE=2
 endif
 
 ifeq ($(VERBOSE),y)
