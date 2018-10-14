@@ -46,7 +46,7 @@
 #include <netinet/in.h>
 #include <time.h>
 #include <sys/timeb.h>
-#include <limits.h>
+#include <limits.h> /* LINE_MAX */
 
 #include "crcext.h"
 #include "crc_rnc.h"
@@ -856,15 +856,27 @@ select_test_groups(const struct enum_map *pmap, const unsigned int map_len,
         char *pch = NULL;
         uint64_t tag_sum = 0;
         char *user_tags_cpy = NULL;
+        size_t user_tags_len = 0;
 
-        user_tags_cpy = (char *)malloc(strlen(user_tags) + 1);
+        if (pmap == NULL || user_tags == NULL || map_len == 0)
+                return;
+
+        user_tags_len = strlen(user_tags);
+        if (user_tags_len == 0)
+                return;
+
+        if (user_tags_len > LINE_MAX)
+                user_tags_len = LINE_MAX;
+
+        user_tags_cpy = (char *)malloc(user_tags_len + 1);
         if (user_tags_cpy == NULL) {
                 printf("Memory allocation error in %s at %d. "
                        "Exiting program ...\n", __FILE__, __LINE__);
                 exit(EXIT_FAILURE);
         }
-        memset(user_tags_cpy, 0, strlen(user_tags) + 1);
-        strncpy(user_tags_cpy, user_tags, strlen(user_tags));
+
+        memset(user_tags_cpy, 0, user_tags_len + 1);
+        strncpy(user_tags_cpy, user_tags, user_tags_len);
 
         /**
          * Reset all exec bits in the all available test
